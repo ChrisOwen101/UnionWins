@@ -93,6 +93,7 @@ def poll_task_status(response_id: str) -> tuple[str, str | None]:
 def extract_json_from_response(output_text: str) -> list[dict]:
     """
     Extract JSON array from OpenAI response text.
+    If JSON is malformed, uses GPT-4o to fix it.
 
     Args:
         output_text: Raw response text from OpenAI
@@ -101,7 +102,7 @@ def extract_json_from_response(output_text: str) -> list[dict]:
         List of win dictionaries
 
     Raises:
-        json.JSONDecodeError: If JSON parsing fails
+        json.JSONDecodeError: If JSON parsing fails even after GPT fix attempt
     """
     json_text = output_text.strip()
 
@@ -117,7 +118,72 @@ def extract_json_from_response(output_text: str) -> list[dict]:
         if json_match:
             json_text = json_match.group(0)
 
-    return json.loads(json_text)
+    try:
+        return json.loads(json_text)
+    except json.JSONDecodeError as e:
+        print(f"⚠️  Malformed JSON detected: {str(e)}")
+        print(f"📝 Attempting to fix JSON with GPT-5.2...")
+
+        # Use GPT-5.2 to fix the malformed JSON
+        try:
+            fixed_json = fix_malformed_json(json_text)
+            return json.loads(fixed_json)
+        except Exception as fix_error:
+            print(f"❌ Failed to fix JSON: {str(fix_error)}")
+            raise e  # Re-raise the original error
+
+
+def fix_malformed_json(malformed_json: str) -> str:
+    """
+    Use GPT-5.2 to fix malformed JSON.
+
+    Args:
+        malformed_json: The malformed JSON string
+
+    Returns:
+        Fixed JSON string
+
+    Raises:
+        Exception: If GPT fails to fix the JSON
+    """
+    prompt = f"""Fix the following malformed JSON and return ONLY the corrected JSON array, with no additional text or explanation.
+
+The JSON should be an array of objects with these fields:
+- title: string
+- union_name: string or null
+- emoji: string (single emoji)
+- date: string (YYYY-MM-DD format)
+- url: string
+- summary: string
+
+Malformed JSON:
+{malformed_json}
+
+Return ONLY the corrected JSON array:"""
+
+    response = client.chat.completions.create(
+        model="gpt-5.2",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a JSON repair expert. Fix malformed JSON and return only valid JSON, no explanations."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        temperature=0
+    )
+
+    fixed_text = response.choices[0].message.content.strip()
+
+    # Remove markdown code blocks if present
+    fixed_text = re.sub(r'```(?:json)?\s*', '', fixed_text)
+    fixed_text = re.sub(r'\s*```', '', fixed_text)
+
+    print(f"✅ JSON fixed successfully")
+    return fixed_text.strip()
 
 
 def validate_win_data(win_data: dict) -> bool:
