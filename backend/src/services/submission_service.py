@@ -13,7 +13,7 @@ from src.models import UnionWinDB
 
 def scrape_url_with_openai(url: str) -> dict:
     """
-    Use OpenAI GPT-4 with web search to scrape a URL and extract union win information.
+    Use OpenAI GPT-5.2 with web search to scrape a URL and extract union win information.
 
     Args:
         url: The URL to scrape
@@ -22,34 +22,31 @@ def scrape_url_with_openai(url: str) -> dict:
         dict with keys: title, union_name, date, summary, image (or None on failure)
     """
     try:
-        # Use GPT-4 with web search to analyze the URL
-        response = client.chat.completions.create(
+        print(f"🔍 Scraping URL with OpenAI: {url}", flush=True)
+
+        # Use GPT-5.2 with Responses API and web search tool
+        response = client.responses.create(
             model="gpt-5.2",
             tools=[{"type": "web_search"}],
-            messages=[
-                {
-                    "role": "system",
-                    "content": """You are an expert at extracting information about union victories and labor wins from news articles and web pages.
-                    
-Your task is to analyze the provided URL and extract the following information:
+            reasoning={"effort": "medium"},
+            text={"format": "json"},
+            input=f"""You are an expert at extracting information about union victories and labour wins from news articles and web pages.
+
+Analyze this URL: {url}
+
+Extract the following information:
 - title: A concise, compelling title (max 100 characters)
-- union_name: The name of the union involved (e.g., "UAW", "Teamsters Local 123")
+- union_name: The name of the union involved (e.g., "Unite", "GMB", "RMT", "NEU")
 - date: The date of the win in YYYY-MM-DD format (if not found, use today's date)
 - summary: A clear 3-5 sentence summary of the win
 - image: The URL of a relevant image from the article (if available)
 
 Return the information as a JSON object with these exact keys.
 If you cannot find specific information, use reasonable defaults or indicate null."""
-                },
-                {
-                    "role": "user",
-                    "content": f"Please analyze this URL and extract union win information: {url}"
-                }
-            ],
-            response_format={"type": "json_object"}
         )
 
-        result = json.loads(response.choices[0].message.content)
+        result = json.loads(response.output_text)
+        print(f"✅ Successfully extracted data from URL", flush=True)
 
         # Ensure we have required fields
         if not result.get("title"):
@@ -64,7 +61,9 @@ If you cannot find specific information, use reasonable defaults or indicate nul
         return result
 
     except Exception as e:
-        print(f"Error scraping URL with OpenAI: {e}")
+        print(f"❌ Error scraping URL with OpenAI: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return None
 
 
