@@ -73,37 +73,18 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p $DEPLOY_PORT $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
 
-          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST << EOF
-          set -e
-          echo "Deploying Union Wins application..."
+          # Create .env file locally with actual values
+          echo "DATABASE_URL=$DATABASE_URL" > /tmp/deploy.env
+          echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> /tmp/deploy.env
 
-          # Navigate to application directory
-          cd ~/unionwins || { mkdir -p ~/unionwins && cd ~/unionwins; }
+          # Copy .env file to server
+          sshpass -p "$DEPLOY_PASSWORD" scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT /tmp/deploy.env $DEPLOY_USER@$DEPLOY_HOST:~/unionwins/.env
 
-          # Pull the latest code
-          if [ -d .git ]; then
-            git pull origin main
-          else
-            git clone $REPO_URL .
-          fi
-
-          # Login to container registry
-          echo "$REGISTRY_TOKEN" | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin
-
-          # Pull the latest image
-          docker pull $REGISTRY/$IMAGE_NAME:latest
-
-          # Stop existing container if running
-          docker compose down 2>/dev/null || true
-
-          # Update .env if needed (ensure required vars are set)
-          if [ ! -f .env ]; then
-            echo "DATABASE_URL=$DATABASE_URL" > .env
-            echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .env
-          fi
-
-          # Start the application with updated image
-          docker compose up -d
-
-          echo "Deployment completed successfully!"
-          EOF
+          # Deploy via SSH
+          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "cd ~/unionwins && \
+            if [ -d .git ]; then git pull origin main; else git clone $REPO_URL .; fi && \
+            echo '$REGISTRY_TOKEN' | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin && \
+            docker pull $REGISTRY/$IMAGE_NAME:latest && \
+            docker compose down 2>/dev/null || true && \
+            docker compose up -d && \
+            echo 'Deployment completed successfully!'"
