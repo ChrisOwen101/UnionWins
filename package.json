@@ -1,0 +1,18 @@
+{
+  "name": "union-wins",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "./dev.sh",
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && .venv/bin/uvicorn src.main:app --reload --host 0.0.0.0 --port 3001",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && uv sync",
+    "docker:build": "docker build -t union-wins .",
+    "docker:run": "docker run -p 3001:3001 --env-file .env union-wins",
+    "docker:compose": "docker compose up --build",
+    "docker:compose:down": "docker compose down"
+  },
+  "workspaces": [
+    "frontend"
+  ]
+}

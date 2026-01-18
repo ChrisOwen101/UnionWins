@@ -1,0 +1,104 @@
+name: Build and Deploy to Hetzner
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Deploy to Hetzner
+        env:
+          DEPLOY_HOST: ${{ secrets.HETZNER_HOST }}
+          DEPLOY_USER: ${{ secrets.HETZNER_USER }}
+          DEPLOY_PASSWORD: ${{ secrets.HETZNER_PASSWORD }}
+          DEPLOY_PORT: ${{ secrets.HETZNER_PORT }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_TAG: ${{ steps.meta.outputs.tags }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p $DEPLOY_PORT $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          
+          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+          set -e
+          echo "Deploying Union Wins application..."
+          
+          # Navigate to application directory
+          cd ~/unionwins || mkdir -p ~/unionwins && cd ~/unionwins
+          
+          # Pull the latest code
+          if [ -d .git ]; then
+            git pull origin main
+          else
+            git clone ${{ github.server_url }}/${{ github.repository }}.git .
+          fi
+          
+          # Login to container registry
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          
+          # Pull the latest image
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Stop existing container if running
+          docker compose down || true
+          
+          # Update .env if needed (ensure required vars are set)
+          if [ ! -f .env ]; then
+            echo "DATABASE_URL=${DATABASE_URL}" > .env
+            echo "OPENAI_API_KEY=${OPENAI_API_KEY}" >> .env
+          fi
+          
+          # Start the application with updated image
+          docker compose up -d
+          
+          echo "Deployment completed successfully!"
+          EOF

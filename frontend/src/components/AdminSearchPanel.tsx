@@ -1,0 +1,51 @@
+import { useState } from 'react'
+
+/**
+ * Admin panel for searching new union wins
+ */
+export const AdminSearchPanel: React.FC = () => {
+    const [loading, setLoading] = useState(false)
+    const [message, setMessage] = useState('')
+
+    const handleSearch = async () => {
+        setLoading(true)
+        setMessage('')
+
+        try {
+            const response = await fetch('/api/wins/search', {
+                method: 'POST',
+            })
+            const data = await response.json()
+            setMessage(data.message + ' - ' + data.note)
+        } catch (err) {
+            setMessage('Error: ' + (err as Error).message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">
+                Search for New Union Wins
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+                Trigger OpenAI deep research to find recent union victories from the last 7 days.
+            </p>
+
+            <button
+                onClick={handleSearch}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+                {loading ? 'Searching...' : 'Search for New Wins'}
+            </button>
+
+            {message && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded text-sm text-gray-700">
+                    {message}
+                </div>
+            )}
+        </div>
+    )
+}
