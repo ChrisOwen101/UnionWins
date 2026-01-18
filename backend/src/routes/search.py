@@ -5,8 +5,9 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from src.database import get_db
-from src.schemas import SearchRequest, SearchResponse
+from src.schemas import SearchRequest, SearchResponse, SearchRequestStatus
 from src.services.search_service import calculate_date_range, create_search_request
+from src.models import SearchRequestDB
 
 router = APIRouter(prefix="/api/wins", tags=["search"])
 
@@ -60,3 +61,40 @@ async def search_wins(request: SearchRequest, db: Session = Depends(get_db)) -> 
             newWinsFound=0,
             note=f"Error: {str(e)}"
         )
+
+
+@router.get("/search/status")
+async def get_search_status(db: Session = Depends(get_db)) -> list[SearchRequestStatus]:
+    """
+    Get the status of recent search requests.
+    Returns the last 10 search requests ordered by most recent first.
+
+    Args:
+        db: Database session
+    """
+    try:
+        # Get the last 10 search requests
+        search_requests = (
+            db.query(SearchRequestDB)
+            .order_by(SearchRequestDB.created_at.desc())
+            .limit(10)
+            .all()
+        )
+
+        return [
+            SearchRequestStatus(
+                id=req.id,
+                status=req.status,
+                date_range=req.date_range,
+                new_wins_found=req.new_wins_found,
+                error_message=req.error_message,
+                created_at=req.created_at.isoformat(),
+                updated_at=req.updated_at.isoformat(),
+            )
+            for req in search_requests
+        ]
+    except Exception as e:
+        print(f"Error fetching search status: {e}")
+        import traceback
+        traceback.print_exc()
+        return []

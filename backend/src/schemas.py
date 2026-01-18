@@ -53,3 +53,14 @@ class SearchResponse(BaseModel):
     searched: str
     newWinsFound: int
     note: str
+
+
+class SearchRequestStatus(BaseModel):
+    """Schema for search request status."""
+    id: int
+    status: str
+    date_range: str
+    new_wins_found: int
+    error_message: str | None
+    created_at: str
+    updated_at: str
