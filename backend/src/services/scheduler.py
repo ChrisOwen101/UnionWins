@@ -1,0 +1,71 @@
+"""
+Scheduler service for automated tasks.
+"""
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from datetime import datetime
+from sqlalchemy.orm import Session
+from src.database import get_db
+from src.services.search_service import calculate_date_range, create_search_request
+
+
+def scheduled_search_job() -> None:
+    """
+    Scheduled job that creates a search request every 3 days.
+    This will queue a search which will be picked up by the background polling thread.
+    """
+    db = None
+    try:
+        db = next(get_db())
+
+        # Calculate date range for the last 3 days
+        _, _, date_range = calculate_date_range(days=3)
+
+        # Create a search request in the database
+        search_request = create_search_request(db, date_range)
+
+        print(
+            f"⏰ Scheduled search triggered: Request {search_request.id} queued for {date_range}")
+
+    except Exception as e:
+        print(f"❌ Error in scheduled search job: {e}")
+        if db:
+            db.rollback()
+    finally:
+        if db:
+            db.close()
+
+
+# Global scheduler instance
+scheduler = BackgroundScheduler()
+
+
+def start_scheduler() -> None:
+    """
+    Initialize and start the scheduler.
+    Adds a job that runs every 3 days to trigger a search.
+    """
+    if not scheduler.running:
+        # Add the search job to run every 3 days
+        scheduler.add_job(
+            scheduled_search_job,
+            trigger=IntervalTrigger(days=3),
+            id='three_day_search',
+            name='Three-day union wins search',
+            replace_existing=True,
+            next_run_time=datetime.now()
+        )
+
+        scheduler.start()
+        print("✅ Scheduler started - will run search every 3 days")
+        print(
+            f"📅 Next scheduled search: {scheduler.get_job('three_day_search').next_run_time}")
+
+
+def stop_scheduler() -> None:
+    """
+    Gracefully shutdown the scheduler.
+    """
+    if scheduler.running:
+        scheduler.shutdown()
+        print("🛑 Scheduler stopped")

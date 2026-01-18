@@ -20,6 +20,7 @@ async def search_wins(request: SearchRequest, db: Session = Depends(get_db)) -> 
 
     Args:
         request: SearchRequest containing optional date parameter (YYYY-MM-DD format)
+                 and days parameter (default: 7)
         db: Database session
     """
     try:
@@ -28,12 +29,12 @@ async def search_wins(request: SearchRequest, db: Session = Depends(get_db)) -> 
         # Calculate date range: if date provided, use it as end date; otherwise use current date
         if request.date:
             end_date = datetime.strptime(request.date, "%Y-%m-%d")
-            start_date = end_date - timedelta(days=7)
+            start_date = end_date - timedelta(days=request.days)
             date_range = (
                 f"{start_date.strftime('%B %d, %Y')} to {end_date.strftime('%B %d, %Y')}"
             )
         else:
-            _, _, date_range = calculate_date_range(days=7)
+            _, _, date_range = calculate_date_range(days=request.days)
 
         # Create a search request in the database
         search_request = create_search_request(db, date_range)

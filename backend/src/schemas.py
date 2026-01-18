@@ -44,6 +44,7 @@ class ReviewWinRequest(BaseModel):
 class SearchRequest(BaseModel):
     """Schema for search request with optional date parameter."""
     date: str | None = None  # Optional date in format YYYY-MM-DD
+    days: int = 7  # Number of days to search back (default: 7)
 
 
 class SearchResponse(BaseModel):

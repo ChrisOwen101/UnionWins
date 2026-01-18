@@ -20,6 +20,7 @@ from src.services.research_service import (
     update_request_status
 )
 from src.services.search_service import get_pending_requests, get_processing_requests
+from src.services.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI()
 
@@ -141,6 +142,9 @@ async def startup_event():
     )
     polling_thread.start()
     print("✅ Background polling thread started")
+
+    # Start the scheduler for automated searches
+    start_scheduler()
     print(" ")
 
 
@@ -150,6 +154,9 @@ async def shutdown_event():
     global polling_active
     polling_active = False
     print("🛑 Shutting down background polling...")
+
+    # Stop the scheduler
+    stop_scheduler()
 
 
 # Configure CORS - allow everything
