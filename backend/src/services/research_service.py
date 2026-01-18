@@ -19,21 +19,66 @@ def create_research_input(date_range: str) -> str:
     Returns:
         Formatted research prompt
     """
-    return f"""Research and find recent trade union victories, successful union organizing campaigns, and labour movement wins from {date_range} in the United Kingdom.
+    return f"""Research and find as many recent trade union victories as you can, successful union organizing campaigns, and labour movement wins from {date_range} in the United Kingdom.
+
+Here is a list of major UK trade unions to consider:
+- Accord, Advance, Aegis the Union, Artists' Union England (AUE)
+- ASLEF (Associated Society of Locomotive Engineers and Firemen)
+- Association of Educational Psychologists (AEP)
+- Association of Flight Attendants (AFA)
+- BFAWU (Bakers, Food and Allied Workers Union)
+- BALPA (British Airline Pilots' Association)
+- British Dietetic Association (BDA)
+- British Orthoptic Society Trade Union (BOSTU)
+- CSP (Chartered Society of Physiotherapy)
+- CWU (Communication Workers Union)
+- EIS (Educational Institute of Scotland) 
+- Equity
+- FDA
+- FBU (Fire Brigades Union)
+- GMB
+- HCSA (Hospital Consultants and Specialists Association)
+- MU (Musicians' Union)
+- NAPO (National Association of Probation Officers)
+- NAHT (National Association of Head Teachers)
+- NARS (National Association of Racing Staff)
+- NASUWT (National Association of Schoolmasters Union of Women Teachers)
+- NEU (National Education Union)
+- NUJ (National Union of Journalists)
+- NUM (National Union of Mineworkers)
+- NGSU (Nationwide Group Staff Union)
+- Nautilus UK
+- POA (Prison Officers Association), 
+- PFA (Professional Footballers' Association)
+- Prospect
+- PCS (Public and Commercial Services Union)
+- RMT (National Union of Rail, Maritime and Transport Workers)
+- RCM (Royal College of Midwives)
+- RCPod (Royal College of Podiatry)
+- SoR (Society of Radiographers)
+- TSSA (Transport Salaried Staffs' Association)
+- UCAC (Undeb Cenedlaethol Athrawon Cymru)
+- USDAW (Union of Shop, Distributive and Allied Workers)
+- Unison
+- Unite the Union
+- URTU (United Road Transport Union)
+- UCU (University and College Union)
+- WGGB (Writers' Guild of Great Britain)
+- TUC (Trades Union Congress)
 
 Do:
 - Find specific, verified trade union victories and labour movement wins
 - Include exact dates, specific figures, and measurable outcomes where available
 - Identify the specific union or labour organization involved in each victory
 - Choose an appropriate emoji that represents the industry, sector, or type of victory (e.g., 🏥 for healthcare, 🚌 for transport, 📚 for education etc)
-- Prioritize reliable, up-to-date sources: official union websites (TUC, Unite, GMB, Unison), reputable news outlets (BBC, The Guardian, Reuters), government announcements
+- Prioritize reliable, up-to-date sources: official union websites, reputable news outlets (BBC, The Guardian, Reuters), government announcements
 - For each victory, provide: a clear descriptive title, union name, representative emoji, exact date (YYYY-MM-DD format), credible source URL, and a 2-3 sentence summary
 - Include inline citations for each win
 - Only include actual verified wins, not speculation or ongoing negotiations
 
 CRITICAL: Format your response as a valid JSON array. Each win must be a JSON object with these exact fields:
 - title: string (clear, descriptive title)
-- union_name: string (name of the union or labour organization, e.g., "Unite", "GMB", "Unison", "TUC")
+- union_name: string (name of the union or labour organization, e.g., "Unite", "GMB", "Unison", "TUC", etc)
 - emoji: string (single emoji character that represents the win, e.g., "🏥", "🚌", "📚", "✊")
 - date: string (YYYY-MM-DD format)
 - url: string (credible source URL)
