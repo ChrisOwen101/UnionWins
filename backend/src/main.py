@@ -169,7 +169,12 @@ app.include_router(rss.router)
 app.include_router(submissions.router)
 
 # Serve static files from frontend build
-static_dir = Path(__file__).parent.parent.parent / "frontend" / "dist"
+# In Docker: /app/backend/static, locally: ../frontend/dist
+static_dir = Path(__file__).parent.parent / "static"
+if not static_dir.exists():
+    # Fallback to local development path
+    static_dir = Path(__file__).parent.parent.parent / "frontend" / "dist"
+
 if static_dir.exists():
     app.mount(
         "/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets")
