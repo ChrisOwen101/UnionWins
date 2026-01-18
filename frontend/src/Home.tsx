@@ -34,7 +34,7 @@ function Home() {
     return (
         <div className="min-h-screen bg-neutral-50">
             <Header
-                title="Union Wins"
+                title="What Have Unions Done For Us?"
                 showAdminLink
                 onSubmitClick={() => setIsSubmitModalOpen(true)}
             />

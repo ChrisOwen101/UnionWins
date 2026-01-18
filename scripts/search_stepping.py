@@ -51,7 +51,8 @@ def search_stepping(
     base_url: str = "http://localhost:8000",
     days_back: int = 30,
     step_days: int = 3,
-    delay_seconds: float = 0.5
+    delay_seconds: float = 0.5,
+    start_date: Optional[str] = None
 ) -> None:
     """
     Make search requests stepping back in time.
@@ -61,8 +62,12 @@ def search_stepping(
         days_back: How many days back to go (default 30)
         step_days: Number of days to step back each request (default 3)
         delay_seconds: Delay between requests in seconds (default 0.5)
+        start_date: Starting date in YYYY-MM-DD format (default: today)
     """
-    today = datetime.now().date()
+    if start_date:
+        today = datetime.strptime(start_date, "%Y-%m-%d").date()
+    else:
+        today = datetime.now().date()
     print(
         f"🚀 Starting search requests from {today} stepping back {days_back} days")
     print(f"   Step size: {step_days} days")
@@ -133,6 +138,11 @@ if __name__ == "__main__":
         default=0.5,
         help="Delay between requests in seconds (default: 0.5)"
     )
+    parser.add_argument(
+        "--start-date",
+        type=str,
+        help="Starting date in YYYY-MM-DD format (default: today)"
+    )
 
     args = parser.parse_args()
 
@@ -140,5 +150,6 @@ if __name__ == "__main__":
         base_url=args.url,
         days_back=args.days_back,
         step_days=args.step,
-        delay_seconds=args.delay
+        delay_seconds=args.delay,
+        start_date=args.start_date
     )
