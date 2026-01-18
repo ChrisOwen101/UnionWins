@@ -63,38 +63,43 @@ jobs:
           DEPLOY_PASSWORD: ${{ secrets.HETZNER_PASSWORD }}
           DEPLOY_PORT: ${{ secrets.HETZNER_PORT }}
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IMAGE_TAG: ${{ steps.meta.outputs.tags }}
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p $DEPLOY_PORT $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
 
-          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST << EOF
           set -e
           echo "Deploying Union Wins application..."
 
           # Navigate to application directory
-          cd ~/unionwins || mkdir -p ~/unionwins && cd ~/unionwins
+          cd ~/unionwins || { mkdir -p ~/unionwins && cd ~/unionwins; }
 
           # Pull the latest code
           if [ -d .git ]; then
             git pull origin main
           else
-            git clone ${{ github.server_url }}/${{ github.repository }}.git .
+            git clone $REPO_URL .
           fi
 
           # Login to container registry
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          echo "$REGISTRY_TOKEN" | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin
 
           # Pull the latest image
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker pull $REGISTRY/$IMAGE_NAME:latest
 
           # Stop existing container if running
-          docker compose down || true
+          docker compose down 2>/dev/null || true
 
           # Update .env if needed (ensure required vars are set)
           if [ ! -f .env ]; then
-            echo "DATABASE_URL=${DATABASE_URL}" > .env
-            echo "OPENAI_API_KEY=${OPENAI_API_KEY}" >> .env
+            echo "DATABASE_URL=$DATABASE_URL" > .env
+            echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .env
           fi
 
           # Start the application with updated image
