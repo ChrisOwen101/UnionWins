@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import type { UnionWin } from '../types'
 
+// Extend Window interface for SSR data
+declare global {
+    interface Window {
+        __INITIAL_DATA__?: {
+            wins: UnionWin[]
+        }
+    }
+}
+
 interface UseWinsResult {
     wins: UnionWin[]
     loading: boolean
@@ -8,14 +17,27 @@ interface UseWinsResult {
 }
 
 /**
- * Custom hook to fetch What Have Unions Done For Us from the API
+ * Custom hook to fetch What Have Unions Done For Us from the API.
+ * Uses server-side rendered data if available for faster initial load.
  */
 export const useWins = (): UseWinsResult => {
-    const [wins, setWins] = useState<UnionWin[]>([])
-    const [loading, setLoading] = useState(true)
+    // Check for pre-loaded SSR data
+    const hasSSRData = typeof window !== 'undefined' &&
+        window.__INITIAL_DATA__?.wins &&
+        window.__INITIAL_DATA__.wins.length > 0
+
+    const [wins, setWins] = useState<UnionWin[]>(
+        hasSSRData ? window.__INITIAL_DATA__!.wins : []
+    )
+    const [loading, setLoading] = useState(!hasSSRData)
     const [error, setError] = useState<Error | null>(null)
 
     useEffect(() => {
+        // Skip API call if we already have SSR data
+        if (hasSSRData) {
+            return
+        }
+
         const fetchWins = async () => {
             try {
                 const response = await fetch('/api/wins')
@@ -33,7 +55,7 @@ export const useWins = (): UseWinsResult => {
         }
 
         fetchWins()
-    }, [])
+    }, [hasSSRData])
 
     return { wins, loading, error }
 }

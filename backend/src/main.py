@@ -3,12 +3,14 @@ Main application entry point for UnionWins API.
 """
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from sqlalchemy.orm import Session
 import threading
 import time
+import json
 
 from src.config import ALLOWED_ORIGINS, POLLING_INTERVAL_SECONDS, PORT
 from src.database import get_db, init_db
@@ -208,19 +210,46 @@ if static_dir.exists():
         "/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets")
 
     @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
+    async def serve_spa(full_path: str, db: Session = Depends(get_db)):
         """
-        Serve the frontend SPA. This catch-all route must be defined last.
+        Serve the frontend SPA with server-side rendered data.
+        This catch-all route must be defined last.
         Returns index.html for all non-API routes to support client-side routing.
+        Pre-loads wins data for faster initial page load.
         """
+        from src.services.win_service import get_all_wins_sorted
+        
         # Check if requesting a static file
         file_path = static_dir / full_path
         if file_path.is_file():
             return FileResponse(file_path)
-        # Otherwise serve index.html for SPA routing
-        return FileResponse(static_dir / "index.html")
+        
+        # For HTML routes, inject wins data for SSR
+        index_path = static_dir / "index.html"
+        if not index_path.exists():
+            return FileResponse(index_path)
+        
+        # Read the HTML template
+        with open(index_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Get wins data for SSR
+        wins = get_all_wins_sorted(db)
+        wins_json = json.dumps([win.model_dump() for win in wins])
+        
+        # Inject wins data as a script tag before the closing </head>
+        ssr_script = f'''<script>
+        window.__INITIAL_DATA__ = {{
+            wins: {wins_json}
+        }};
+    </script>
+    </head>'''
+        
+        html_content = html_content.replace('</head>', ssr_script)
+        
+        return HTMLResponse(content=html_content)
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    uvicorn.run(app, host="0.0.0.0", port=PORT, workers=4)
