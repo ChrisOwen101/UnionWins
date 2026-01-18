@@ -2,6 +2,7 @@
 Main application entry point for UnionWins API.
 """
 from pathlib import Path
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -22,10 +23,45 @@ from src.services.research_service import (
 from src.services.search_service import get_pending_requests, get_processing_requests
 from src.services.scheduler import start_scheduler, stop_scheduler
 
-app = FastAPI()
-
 # Global flag to control background polling thread
 polling_active = True
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for application startup and shutdown.
+    Handles initialization and cleanup of background tasks.
+    """
+    global polling_active
+
+    # Startup
+    print(" ", flush=True)
+    print("🚀 Starting UnionWins API...", flush=True)
+    init_db()
+
+    # Start background polling thread
+    polling_thread = threading.Thread(
+        target=process_pending_requests,
+        daemon=True,
+        name="SearchPollingThread"
+    )
+    polling_thread.start()
+    print("✅ Background polling thread started", flush=True)
+
+    # Start the scheduler for automated searches
+    start_scheduler()
+    print(" ", flush=True)
+
+    yield
+
+    # Shutdown
+    polling_active = False
+    print("🛑 Shutting down background polling...", flush=True)
+    stop_scheduler()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 def process_pending_requests() -> None:
@@ -35,8 +71,8 @@ def process_pending_requests() -> None:
     Runs continuously in a separate thread.
     """
     global polling_active
-    print(" ")
-    print("🔄 Background polling thread started")
+    print(" ", flush=True)
+    print("🔄 Background polling thread started", flush=True)
 
     while polling_active:
         db = None
@@ -47,7 +83,8 @@ def process_pending_requests() -> None:
             pending = get_pending_requests(db)
 
             if pending:
-                print(f"📋 Processing pending search request {pending.id}...")
+                print(
+                    f"📋 Processing pending search request {pending.id}...", flush=True)
                 pending.status = "processing"
                 db.commit()
 
@@ -60,19 +97,30 @@ def process_pending_requests() -> None:
                 # Store response ID for polling
                 pending.response_id = response_id
                 db.commit()
-                print(f"✅ Created background research task: {response_id}")
+                print(
+                    f"✅ Created background research task: {response_id}", flush=True)
 
             # Check for processing requests and poll their status
             processing = get_processing_requests(db)
 
+            if processing:
+                print(
+                    f"🔍 Found {len(processing)} request(s) in processing state", flush=True)
+
+            if processing:
+                print(
+                    f"🔍 Found {len(processing)} request(s) in processing state", flush=True)
+
             for request in processing:
                 try:
                     # Poll the response status
+                    print(
+                        f"🔎 Polling status for task {request.response_id}...", flush=True)
                     status, output_text = poll_task_status(request.response_id)
 
                     if status == "completed":
                         print(
-                            f"✅ Research task {request.response_id} completed")
+                            f"✅ Research task {request.response_id} completed", flush=True)
 
                         try:
                             # Process the results
@@ -83,17 +131,20 @@ def process_pending_requests() -> None:
                             update_request_status(
                                 db, request, "completed", new_wins_found=new_wins_count
                             )
+                            print(
+                                f"🎉 Found {new_wins_count} new wins!", flush=True)
 
                         except Exception as e:
                             # Roll back the session on any error
                             db.rollback()
-                            print(f"❌ Error processing wins: {e}")
+                            print(f"❌ Error processing wins: {e}", flush=True)
                             update_request_status(
                                 db, request, "failed", error_message=str(e)
                             )
 
                     elif status == "failed":
-                        print(f"❌ Research task {request.response_id} failed")
+                        print(
+                            f"❌ Research task {request.response_id} failed", flush=True)
                         update_request_status(
                             db,
                             request,
@@ -103,13 +154,14 @@ def process_pending_requests() -> None:
                     else:
                         print(
                             f"⏳ Task {request.response_id} still processing "
-                            f"(status: {status})"
+                            f"(status: {status})", flush=True
                         )
 
                 except Exception as e:
                     # Roll back the session on any error
                     db.rollback()
-                    print(f"❌ Error polling request {request.id}: {e}")
+                    print(
+                        f"❌ Error polling request {request.id}: {e}", flush=True)
                     update_request_status(
                         db, request, "failed", error_message=str(e))
 
@@ -117,7 +169,7 @@ def process_pending_requests() -> None:
             # Roll back the session on any error
             if db:
                 db.rollback()
-            print(f"❌ Background polling error: {e}")
+            print(f"❌ Background polling error: {e}", flush=True)
         finally:
             if db:
                 db.close()
@@ -125,38 +177,7 @@ def process_pending_requests() -> None:
         # Sleep for configured interval before next poll
         time.sleep(POLLING_INTERVAL_SECONDS)
 
-    print("🛑 Background polling thread stopped")
-
-
-# Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database and start background polling thread."""
-    init_db()
-
-    # Start background polling thread
-    polling_thread = threading.Thread(
-        target=process_pending_requests,
-        daemon=True,
-        name="SearchPollingThread"
-    )
-    polling_thread.start()
-    print("✅ Background polling thread started")
-
-    # Start the scheduler for automated searches
-    start_scheduler()
-    print(" ")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Gracefully shutdown background polling."""
-    global polling_active
-    polling_active = False
-    print("🛑 Shutting down background polling...")
-
-    # Stop the scheduler
-    stop_scheduler()
+    print("🛑 Background polling thread stopped", flush=True)
 
 
 # Configure CORS - allow everything

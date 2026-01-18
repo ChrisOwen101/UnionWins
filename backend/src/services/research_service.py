@@ -69,7 +69,7 @@ def create_background_task(research_input: str) -> str:
         input=research_input,
         background=True,
         tools=[{"type": "web_search"}],
-        reasoning={"effort": "high"}
+        reasoning={"effort": "medium"}
     )
     return response.id
 
