@@ -67,38 +67,38 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p $DEPLOY_PORT $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
-          
+
           sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
           set -e
           echo "Deploying Union Wins application..."
-          
+
           # Navigate to application directory
           cd ~/unionwins || mkdir -p ~/unionwins && cd ~/unionwins
-          
+
           # Pull the latest code
           if [ -d .git ]; then
             git pull origin main
           else
             git clone ${{ github.server_url }}/${{ github.repository }}.git .
           fi
-          
+
           # Login to container registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
-          
+
           # Pull the latest image
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          
+
           # Stop existing container if running
           docker compose down || true
-          
+
           # Update .env if needed (ensure required vars are set)
           if [ ! -f .env ]; then
             echo "DATABASE_URL=${DATABASE_URL}" > .env
             echo "OPENAI_API_KEY=${OPENAI_API_KEY}" >> .env
           fi
-          
+
           # Start the application with updated image
           docker compose up -d
-          
+
           echo "Deployment completed successfully!"
           EOF
