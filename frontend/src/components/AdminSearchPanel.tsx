@@ -14,9 +14,28 @@ export const AdminSearchPanel: React.FC = () => {
         try {
             const response = await fetch('/api/wins/search', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
             })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+
             const data = await response.json()
-            setMessage(data.message + ' - ' + data.note)
+
+            if (data.message && data.note) {
+                setMessage(`${data.message} - ${data.note}`)
+            } else if (data.message) {
+                setMessage(data.message)
+            } else if (data.detail) {
+                // Handle FastAPI error format
+                setMessage(`Error: ${data.detail}`)
+            } else {
+                setMessage('Search completed with unexpected response format')
+            }
         } catch (err) {
             setMessage('Error: ' + (err as Error).message)
         } finally {
