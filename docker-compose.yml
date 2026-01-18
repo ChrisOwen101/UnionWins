@@ -1,0 +1,23 @@
+services:
+  app:
+    image: ghcr.io/chrisowen101/unionwins:latest
+    container_name: unionwins
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - PORT=80
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL_SECONDS:-5}
+    volumes:
+      - unionwins-data:/app/data
+    networks:
+      - unionwins-network
+
+networks:
+  unionwins-network:
+    driver: bridge
+
+volumes:
+  unionwins-data:
