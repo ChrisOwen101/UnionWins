@@ -13,7 +13,7 @@ router = APIRouter(tags=["rss"])
 
 def create_rss_feed(wins: list) -> str:
     """
-    Create an RSS 2.0 feed from union wins.
+    Create an RSS 2.0 feed from What Have Unions Done For Us.
 
     Args:
         wins: List of UnionWin instances sorted by date
@@ -32,7 +32,7 @@ def create_rss_feed(wins: list) -> str:
 
     # Channel metadata
     title = SubElement(channel, 'title')
-    title.text = 'Union Wins'
+    title.text = 'What Have Unions Done For Us'
 
     link = SubElement(channel, 'link')
     link.text = 'https://unionwins.com'
@@ -112,7 +112,7 @@ def create_rss_feed(wins: list) -> str:
 @router.get("/rss", response_class=Response)
 async def get_rss_feed(db: Session = Depends(get_db)) -> Response:
     """
-    Get RSS feed of all union wins in reverse chronological order.
+    Get RSS feed of all What Have Unions Done For Us in reverse chronological order.
 
     Returns:
         RSS XML feed with all wins sorted by date (newest first)

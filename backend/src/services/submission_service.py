@@ -1,5 +1,5 @@
 """
-Service for handling user submissions of union wins.
+Service for handling user submissions of What Have Unions Done For Us.
 Uses OpenAI to scrape and extract information from submitted URLs.
 """
 import json

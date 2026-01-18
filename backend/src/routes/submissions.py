@@ -1,5 +1,5 @@
 """
-API routes for user submissions of union wins.
+API routes for user submissions of What Have Unions Done For Us.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

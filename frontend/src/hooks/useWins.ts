@@ -8,7 +8,7 @@ interface UseWinsResult {
 }
 
 /**
- * Custom hook to fetch union wins from the API
+ * Custom hook to fetch What Have Unions Done For Us from the API
  */
 export const useWins = (): UseWinsResult => {
     const [wins, setWins] = useState<UnionWin[]>([])

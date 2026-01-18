@@ -1,7 +1,7 @@
 [project]
 name = "union-wins-backend"
 version = "1.0.0"
-description = "Backend API for Union Wins"
+description = "Backend API for What Have Unions Done For Us"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",

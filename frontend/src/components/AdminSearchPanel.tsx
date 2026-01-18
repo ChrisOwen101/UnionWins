@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 /**
- * Admin panel for searching new union wins
+ * Admin panel for searching new What Have Unions Done For Us
  */
 export const AdminSearchPanel: React.FC = () => {
     const [loading, setLoading] = useState(false)
@@ -46,7 +46,7 @@ export const AdminSearchPanel: React.FC = () => {
     return (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-2">
-                Search for New Union Wins
+                Search for New What Have Unions Done For Us
             </h2>
             <p className="text-sm text-gray-600 mb-4">
                 Trigger OpenAI deep research to find recent union victories from the last 7 days.

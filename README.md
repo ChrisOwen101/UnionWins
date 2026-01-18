@@ -1,4 +1,4 @@
-# Union Wins
+# What Have Unions Done For Us
 
 A full-stack TypeScript application with React frontend and Python backend.
 

@@ -6,7 +6,7 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Starting Union Wins Development Environment${NC}"
+echo -e "${GREEN}Starting What Have Unions Done For Us Development Environment${NC}"
 echo ""
 
 # Clean up any processes using our ports

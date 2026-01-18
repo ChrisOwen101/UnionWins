@@ -1,5 +1,5 @@
 """
-Service for managing union wins.
+Service for managing What Have Unions Done For Us.
 """
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -62,7 +62,7 @@ def sort_wins_by_date(wins: list[UnionWin], reverse: bool = True) -> list[UnionW
 
 def get_all_wins_sorted(db: Session) -> list[UnionWin]:
     """
-    Get all union wins sorted by date in reverse chronological order.
+    Get all What Have Unions Done For Us sorted by date in reverse chronological order.
 
     Args:
         db: Database session

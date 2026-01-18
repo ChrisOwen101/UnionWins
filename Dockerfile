@@ -1,4 +1,4 @@
-# Multi-stage build for Union Wins application
+# Multi-stage build for What Have Unions Done For Us application
 # Stage 1: Build the frontend
 FROM node:20-alpine AS frontend-builder
 

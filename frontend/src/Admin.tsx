@@ -8,7 +8,7 @@ function Admin() {
     return (
         <div className="min-h-screen bg-white">
             <AdminHeader
-                title="Union Wins - Admin"
+                title="What Have Unions Done For Us - Admin"
                 subtitle="Administrative tools"
             />
 

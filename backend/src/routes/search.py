@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/wins", tags=["search"])
 @router.post("/search")
 async def search_wins(request: SearchRequest, db: Session = Depends(get_db)) -> SearchResponse:
     """
-    Queue a search for new trade union wins.
+    Queue a search for new trade What Have Unions Done For Us.
     The actual processing happens in the background polling thread.
 
     Args:
