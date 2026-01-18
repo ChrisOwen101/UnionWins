@@ -1,12 +1,15 @@
 """
 Main application entry point for UnionWins API.
 """
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import threading
 import time
 
-from src.config import ALLOWED_ORIGINS, POLLING_INTERVAL_SECONDS
+from src.config import ALLOWED_ORIGINS, POLLING_INTERVAL_SECONDS, PORT
 from src.database import get_db, init_db
 from src.routes import wins, search, rss, submissions
 from src.services.research_service import (
@@ -81,6 +84,8 @@ def process_pending_requests() -> None:
                             )
 
                         except Exception as e:
+                            # Roll back the session on any error
+                            db.rollback()
                             print(f"❌ Error processing wins: {e}")
                             update_request_status(
                                 db, request, "failed", error_message=str(e)
@@ -101,11 +106,16 @@ def process_pending_requests() -> None:
                         )
 
                 except Exception as e:
+                    # Roll back the session on any error
+                    db.rollback()
                     print(f"❌ Error polling request {request.id}: {e}")
                     update_request_status(
                         db, request, "failed", error_message=str(e))
 
         except Exception as e:
+            # Roll back the session on any error
+            if db:
+                db.rollback()
             print(f"❌ Background polling error: {e}")
         finally:
             if db:
@@ -142,13 +152,14 @@ async def shutdown_event():
     print("🛑 Shutting down background polling...")
 
 
-# Configure CORS
+# Configure CORS - allow everything
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
@@ -157,7 +168,26 @@ app.include_router(search.router)
 app.include_router(rss.router)
 app.include_router(submissions.router)
 
+# Serve static files from frontend build
+static_dir = Path(__file__).parent.parent.parent / "frontend" / "dist"
+if static_dir.exists():
+    app.mount(
+        "/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """
+        Serve the frontend SPA. This catch-all route must be defined last.
+        Returns index.html for all non-API routes to support client-side routing.
+        """
+        # Check if requesting a static file
+        file_path = static_dir / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        # Otherwise serve index.html for SPA routing
+        return FileResponse(static_dir / "index.html")
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3001)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)

@@ -4,6 +4,7 @@ Service for handling deep research operations using OpenAI.
 import json
 import re
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from src.config import client, DEFAULT_WIN_IMAGE_URL
 from src.models import SearchRequestDB, UnionWinDB
 
@@ -192,14 +193,21 @@ def save_wins_to_db(db: Session, wins_data: list[dict]) -> int:
 
         new_win = create_win_from_data(win_data)
         db.add(new_win)
-        new_wins_count += 1
-        print(
-            f"➕ Added: {win_data.get('emoji', '✊')} {win_data['title']} "
-            f"({win_data.get('union_name', 'N/A')})"
-        )
 
-    if new_wins_count > 0:
-        db.commit()
+        # Commit each win individually to prevent one duplicate from blocking all wins
+        try:
+            db.commit()
+            new_wins_count += 1
+            print(
+                f"➕ Added: {win_data.get('emoji', '✊')} {win_data['title']} "
+                f"({win_data.get('union_name', 'N/A')})"
+            )
+        except IntegrityError as e:
+            # Rollback the session if a duplicate is encountered
+            db.rollback()
+            print(
+                f"⏭️  Skipped duplicate (database constraint): {win_data['title']}")
+            print(f"   Error: {str(e)}")
 
     return new_wins_count
 
