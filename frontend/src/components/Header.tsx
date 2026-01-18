@@ -26,14 +26,6 @@ export const Header: React.FC<HeaderProps> = ({ title, showAdminLink = false, on
                             + Submit
                         </button>
                     )}
-                    {showAdminLink && (
-                        <Link
-                            to="/admin"
-                            className="text-gray-400 hover:text-gray-600 text-2xl"
-                        >
-                            ⋯
-                        </Link>
-                    )}
                 </div>
             </div>
         </header>
