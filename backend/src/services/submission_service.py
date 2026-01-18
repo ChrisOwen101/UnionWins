@@ -8,7 +8,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from src.config import client, DEFAULT_WIN_IMAGE_URL
+from src.config import client
 from src.models import UnionWinDB
 
 # Set up logging
@@ -58,8 +58,6 @@ Return ONLY the JSON object with these exact keys, no markdown formatting, no ex
             result["date"] = datetime.now().strftime("%Y-%m-%d")
         if not result.get("summary"):
             result["summary"] = "A victory for workers and their union."
-        if not result.get("image"):
-            result["image"] = DEFAULT_WIN_IMAGE_URL
 
         return result
 
@@ -103,7 +101,6 @@ def create_submission(db: Session, url: str, submitted_by: str | None = None) ->
         emoji=None,  # Admin can set this later
         date=scraped_data["date"],
         url=url,
-        image=scraped_data["image"],
         summary=scraped_data["summary"],
         status="pending",
         submitted_by=submitted_by

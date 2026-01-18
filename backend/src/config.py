@@ -29,6 +29,3 @@ POLLING_INTERVAL_SECONDS = int(os.getenv("POLLING_INTERVAL_SECONDS", "5"))
 
 # Server configuration
 PORT = int(os.getenv("PORT", "3001"))
-
-# Default image for wins
-DEFAULT_WIN_IMAGE_URL = "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=400&fit=crop&q=80"

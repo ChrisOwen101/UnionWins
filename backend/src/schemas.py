@@ -24,7 +24,6 @@ class PendingWin(BaseModel):
     emoji: str | None
     date: str
     url: str
-    image: str
     summary: str
     status: str
     submitted_by: str | None

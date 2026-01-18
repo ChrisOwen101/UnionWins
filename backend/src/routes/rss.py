@@ -94,14 +94,6 @@ def create_rss_feed(wins: list) -> str:
             category = SubElement(item, 'category')
             category.text = win.union_name
 
-        # Enclosure for image
-        if win.image:
-            enclosure = SubElement(item, 'enclosure')
-            enclosure.set('url', win.image)
-            enclosure.set('type', 'image/jpeg')
-            # Note: We don't have image size, setting a dummy value
-            enclosure.set('length', '0')
-
     # Convert to string with proper XML declaration
     xml_string = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml_string += tostring(rss, encoding='unicode', method='xml')

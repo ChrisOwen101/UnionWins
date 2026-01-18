@@ -37,7 +37,6 @@ def convert_db_win_to_schema(win_db: UnionWinDB) -> UnionWin:
         emoji=win_db.emoji,
         date=win_db.date,
         url=win_db.url,
-        image=win_db.image,
         summary=win_db.summary
     )
 

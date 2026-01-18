@@ -18,7 +18,6 @@ class UnionWinDB(Base):
     emoji = Column(String, nullable=True)
     date = Column(String, nullable=False)
     url = Column(String, nullable=False, unique=True, index=True)
-    image = Column(String, nullable=False)
     summary = Column(Text, nullable=False)
     # Status: 'approved' (default for admin-added), 'pending' (user submission), 'rejected'
     status = Column(String, nullable=False, default="approved")

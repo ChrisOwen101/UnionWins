@@ -50,7 +50,6 @@ async def get_pending(db: Session = Depends(get_db)) -> list[PendingWin]:
             emoji=s.emoji,
             date=s.date,
             url=s.url,
-            image=s.image,
             summary=s.summary,
             status=s.status,
             submitted_by=s.submitted_by

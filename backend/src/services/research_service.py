@@ -5,7 +5,7 @@ import json
 import re
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from src.config import client, DEFAULT_WIN_IMAGE_URL
+from src.config import client
 from src.models import SearchRequestDB, UnionWinDB
 
 
@@ -279,7 +279,6 @@ def create_win_from_data(win_data: dict) -> UnionWinDB:
         emoji=win_data.get('emoji', '✊'),
         date=win_data['date'],
         url=win_data['url'],
-        image=DEFAULT_WIN_IMAGE_URL,
         summary=win_data['summary']
     )
 

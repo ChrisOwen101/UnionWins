@@ -90,13 +90,6 @@ export function AdminPendingSubmissions() {
                             className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                         >
                             <div className="flex gap-4">
-                                {win.image && (
-                                    <img
-                                        src={win.image}
-                                        alt={win.title}
-                                        className="w-24 h-24 object-cover rounded flex-shrink-0"
-                                    />
-                                )}
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-bold text-lg mb-1 truncate">
                                         {win.title}

@@ -5,7 +5,6 @@ export interface UnionWin {
     emoji?: string
     date: string
     url: string
-    image: string
     summary: string
 }
 
@@ -16,7 +15,6 @@ export interface PendingWin {
     emoji?: string
     date: string
     url: string
-    image: string
     summary: string
     status: string
     submitted_by?: string
