@@ -21,8 +21,11 @@ def create_research_input(date_range: str) -> str:
     """
     return f"""Research and find as many recent trade union victories as you can, successful union organizing campaigns, and labour movement wins from {date_range} in the United Kingdom.
 
-Here is a list of major UK trade unions to consider:
-- Accord, Advance, Aegis the Union, Artists' Union England (AUE)
+Here is a list of major UK trade unions to consider, it is not exhaustive but should help guide your research:
+- Accord
+- Advance
+- Aegis the Union
+- Artists' Union England (AUE)
 - ASLEF (Associated Society of Locomotive Engineers and Firemen)
 - Association of Educational Psychologists (AEP)
 - Association of Flight Attendants (AFA)
