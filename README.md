@@ -80,7 +80,7 @@ The frontend is configured to proxy API requests to the backend automatically.
 - TypeScript 5
 - Vite
 - ESLint
-- Tailwind CSS
+- Tailwind
 
 ### Backend
 
