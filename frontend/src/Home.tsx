@@ -15,7 +15,7 @@ function Home() {
     const filteredWins = filterWinsByQuery(wins, searchQuery)
 
     const handleSubmitWin = async (url: string, submittedBy?: string) => {
-        const response = await fetch('http://localhost:3001/api/submissions', {
+        const response = await fetch('/api/submissions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

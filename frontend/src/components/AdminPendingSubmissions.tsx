@@ -9,7 +9,7 @@ export function AdminPendingSubmissions() {
 
     const fetchPendingSubmissions = async () => {
         try {
-            const response = await fetch('http://localhost:3001/api/submissions/pending')
+            const response = await fetch('/api/submissions/pending')
             if (!response.ok) throw new Error('Failed to fetch pending submissions')
             const data = await response.json()
             setPendingWins(data)
@@ -29,7 +29,7 @@ export function AdminPendingSubmissions() {
         setError('')
 
         try {
-            const response = await fetch(`http://localhost:3001/api/submissions/${id}/review`, {
+            const response = await fetch(`/api/submissions/${id}/review`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
