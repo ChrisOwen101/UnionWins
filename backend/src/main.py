@@ -3,14 +3,12 @@ Main application entry point for UnionWins API.
 """
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
-from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse, PlainTextResponse
 import threading
 import time
-import json
 from datetime import datetime, timedelta
 
 from src.config import ALLOWED_ORIGINS, POLLING_INTERVAL_SECONDS, PORT

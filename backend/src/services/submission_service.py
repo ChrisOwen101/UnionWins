@@ -49,7 +49,7 @@ Return ONLY the JSON object with these exact keys, no markdown formatting, no ex
         )
 
         result = json.loads(response.output_text)
-        print(f"✅ Successfully extracted data from URL", flush=True)
+        print("✅ Successfully extracted data from URL", flush=True)
 
         # Ensure we have required fields
         if not result.get("title"):

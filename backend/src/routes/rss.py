@@ -70,8 +70,6 @@ def create_rss_feed(wins: list) -> str:
 
         # Description/summary
         item_desc = SubElement(item, 'description')
-        desc_text = f"<![CDATA[{win.summary}]]>"
-        # We'll handle CDATA manually in the final XML
         item_desc.text = win.summary
 
         # Publication date

@@ -170,7 +170,7 @@ def extract_json_from_response(output_text: str) -> list[dict]:
         return json.loads(json_text)
     except json.JSONDecodeError as e:
         print(f"⚠️  Malformed JSON detected: {str(e)}")
-        print(f"📝 Attempting to fix JSON with GPT-5.2...")
+        print("📝 Attempting to fix JSON with GPT-5.2...")
 
         # Use GPT-5.2 to fix the malformed JSON
         try:
@@ -230,7 +230,7 @@ Return ONLY the corrected JSON array:"""
     fixed_text = re.sub(r'```(?:json)?\s*', '', fixed_text)
     fixed_text = re.sub(r'\s*```', '', fixed_text)
 
-    print(f"✅ JSON fixed successfully")
+    print("✅ JSON fixed successfully")
     return fixed_text.strip()
 
 

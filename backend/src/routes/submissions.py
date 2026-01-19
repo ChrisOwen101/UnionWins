@@ -33,7 +33,7 @@ async def submit_win(
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=500, detail="Failed to process submission")
 
@@ -85,5 +85,5 @@ async def review_submission(
                 status_code=400, detail="Invalid action. Must be 'approve' or 'reject'")
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to process review")

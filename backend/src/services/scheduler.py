@@ -4,7 +4,6 @@ Scheduler service for automated tasks.
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
 from src.database import get_db
 from src.models import SearchRequestDB
 from src.services.search_service import calculate_date_range, create_search_request
