@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 
     # Start background polling thread
     polling_thread = threading.Thread(
-        target=process_pending_requests,
+        target=safe_process_pending_requests,
         daemon=True,
         name="SearchPollingThread"
     )
@@ -76,8 +76,17 @@ def process_pending_requests() -> None:
     print(" ", flush=True)
     print("🔄 Background polling thread started", flush=True)
 
+    poll_count = 0
+
     while polling_active:
         db = None
+        poll_count += 1
+
+        # Log heartbeat every 12 polls (roughly every minute with 5s interval)
+        if poll_count % 12 == 0:
+            print(
+                f"💓 Background thread heartbeat - poll #{poll_count}", flush=True)
+
         try:
             db = next(get_db())
 
@@ -87,7 +96,7 @@ def process_pending_requests() -> None:
             if pending:
                 print(
                     f"📋 Processing pending search request {pending.id}...", flush=True)
-                
+
                 try:
                     # Build research input
                     research_input = create_research_input(pending.date_range)
@@ -106,7 +115,8 @@ def process_pending_requests() -> None:
                     # If creating the background task fails, keep request as pending
                     # so it can be retried on the next poll
                     db.rollback()
-                    print(f"❌ Failed to create background task for request {pending.id}: {e}", flush=True)
+                    print(
+                        f"❌ Failed to create background task for request {pending.id}: {e}", flush=True)
 
             # Check for processing requests and poll their status
             processing = get_processing_requests(db)
@@ -184,6 +194,20 @@ def process_pending_requests() -> None:
     print("🛑 Background polling thread stopped", flush=True)
 
 
+def safe_process_pending_requests() -> None:
+    """
+    Wrapper that catches any unhandled exceptions in the background thread.
+    This ensures the thread doesn't die silently.
+    """
+    try:
+        process_pending_requests()
+    except Exception as e:
+        print(
+            f"💀 CRITICAL: Background polling thread crashed: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+
+
 # Configure CORS - allow everything
 app.add_middleware(
     CORSMiddleware,
@@ -220,25 +244,25 @@ if static_dir.exists():
         Pre-loads wins data for faster initial page load.
         """
         from src.services.win_service import get_all_wins_sorted
-        
+
         # Check if requesting a static file
         file_path = static_dir / full_path
         if file_path.is_file():
             return FileResponse(file_path)
-        
+
         # For HTML routes, inject wins data for SSR
         index_path = static_dir / "index.html"
         if not index_path.exists():
             return FileResponse(index_path)
-        
+
         # Read the HTML template
         with open(index_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
-        
+
         # Get wins data for SSR
         wins = get_all_wins_sorted(db)
         wins_json = json.dumps([win.model_dump() for win in wins])
-        
+
         # Inject wins data as a script tag before the closing </head>
         ssr_script = f'''<script>
         window.__INITIAL_DATA__ = {{
@@ -246,9 +270,9 @@ if static_dir.exists():
         }};
     </script>
     </head>'''
-        
+
         html_content = html_content.replace('</head>', ssr_script)
-        
+
         return HTMLResponse(content=html_content)
 
 
