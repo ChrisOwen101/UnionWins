@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onSubmitClick }) => {
                     {onSubmitClick && (
                         <button
                             onClick={onSubmitClick}
-                            className="text-gray-400 hover:text-gray-600 transition-colors text-sm font-medium"
+                            className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium"
                             title="Submit a union win"
                         >
                             + Submit

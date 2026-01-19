@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from sqlalchemy.orm import Session
 import threading
 import time
@@ -65,6 +65,31 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+# Add security headers middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+
+    # Add cache headers for static assets
+    if "/assets/" in str(request.url):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif request.url.path.endswith((".js", ".css", ".woff", ".woff2", ".ttf", ".eot")):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif request.url.path == "/" or request.url.path.endswith(".html"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    elif "/api/" in str(request.url):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+
+    return response
 
 
 def process_pending_requests() -> None:
@@ -249,45 +274,52 @@ if static_dir.exists():
     app.mount(
         "/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets")
 
+    @app.get("/robots.txt", response_class=PlainTextResponse)
+    async def serve_robots():
+        """Serve robots.txt file."""
+        robots_path = static_dir / "robots.txt"
+        if robots_path.exists():
+            return FileResponse(robots_path, media_type="text/plain")
+        return PlainTextResponse("User-agent: *\nAllow: /\n")
+
+    @app.get("/sitemap.xml")
+    async def serve_sitemap():
+        """Serve sitemap.xml file."""
+        sitemap_path = static_dir / "sitemap.xml"
+        if sitemap_path.exists():
+            return FileResponse(sitemap_path, media_type="application/xml")
+        # Return a basic sitemap if file doesn't exist
+        from datetime import date
+        today = date.today().isoformat()
+        sitemap_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://whathaveunionsdoneforus.uk/</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>"""
+        return PlainTextResponse(sitemap_content, media_type="application/xml")
+
     @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str, db: Session = Depends(get_db)):
+    async def serve_spa(full_path: str):
         """
-        Serve the frontend SPA with server-side rendered data.
+        Serve the frontend SPA.
         This catch-all route must be defined last.
         Returns index.html for all non-API routes to support client-side routing.
-        Pre-loads wins data for faster initial page load.
         """
-        from src.services.win_service import get_all_wins_sorted
-
         # Check if requesting a static file
         file_path = static_dir / full_path
         if file_path.is_file():
             return FileResponse(file_path)
 
-        # For HTML routes, inject wins data for SSR
+        # For HTML routes, serve index.html
         index_path = static_dir / "index.html"
         if not index_path.exists():
             return FileResponse(index_path)
 
-        # Read the HTML template
-        with open(index_path, 'r', encoding='utf-8') as f:
-            html_content = f.read()
-
-        # Get wins data for SSR
-        wins = get_all_wins_sorted(db)
-        wins_json = json.dumps([win.model_dump() for win in wins])
-
-        # Inject wins data as a script tag before the closing </head>
-        ssr_script = f'''<script>
-        window.__INITIAL_DATA__ = {{
-            wins: {wins_json}
-        }};
-    </script>
-    </head>'''
-
-        html_content = html_content.replace('</head>', ssr_script)
-
-        return HTMLResponse(content=html_content)
+        return FileResponse(index_path)
 
 
 if __name__ == "__main__":

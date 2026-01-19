@@ -58,7 +58,7 @@ export const WinsList: React.FC<WinsListProps> = ({
 
     if (wins.length === 0 && searchQuery) {
         return (
-            <p className="text-center text-gray-500 text-sm py-8">
+            <p className="text-center text-gray-700 text-sm py-8">
                 No wins found matching "{searchQuery}"
             </p>
         )
@@ -66,7 +66,7 @@ export const WinsList: React.FC<WinsListProps> = ({
 
     if (wins.length === 0) {
         return (
-            <p className="text-center text-gray-500 text-sm py-8">
+            <p className="text-center text-gray-700 text-sm py-8">
                 No wins to display
             </p>
         )
@@ -90,7 +90,7 @@ export const WinsList: React.FC<WinsListProps> = ({
                     </div>
                 )}
                 {!hasMore && wins.length > 0 && (
-                    <p className="text-center text-gray-400 text-sm py-4">
+                    <p className="text-center text-gray-600 text-sm py-4">
                         You've reached the beginning.{' '}
                         <button
                             onClick={onSubmitClick}

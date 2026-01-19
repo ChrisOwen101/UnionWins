@@ -15,11 +15,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ title, subtitle }) => 
                 </div>
                 <div>
                     <h1 className="font-bold text-white text-base">{title}</h1>
-                    <p className="text-gray-400 text-xs">{subtitle}</p>
+                    <p className="text-gray-600 text-xs">{subtitle}</p>
                 </div>
                 <a
                     href="/"
-                    className="ml-auto text-sm text-gray-400 hover:text-white"
+                    className="ml-auto text-sm text-gray-600 hover:text-white"
                 >
                     ← Back to home
                 </a>
