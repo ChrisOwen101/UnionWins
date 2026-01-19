@@ -107,3 +107,6 @@ docker-compose.override.yml
 *.iml
 .vscode/
 .idea/
+
+__pycache__/
+*.pyc

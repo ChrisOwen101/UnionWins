@@ -87,27 +87,29 @@ def process_pending_requests() -> None:
             if pending:
                 print(
                     f"📋 Processing pending search request {pending.id}...", flush=True)
-                pending.status = "processing"
-                db.commit()
+                
+                try:
+                    # Build research input
+                    research_input = create_research_input(pending.date_range)
 
-                # Build research input
-                research_input = create_research_input(pending.date_range)
+                    # Create background request
+                    response_id = create_background_task(research_input)
 
-                # Create background request
-                response_id = create_background_task(research_input)
-
-                # Store response ID for polling
-                pending.response_id = response_id
-                db.commit()
-                print(
-                    f"✅ Created background research task: {response_id}", flush=True)
+                    # Only update status to processing AFTER we have a response_id
+                    # This prevents requests getting stuck with no response_id
+                    pending.status = "processing"
+                    pending.response_id = response_id
+                    db.commit()
+                    print(
+                        f"✅ Created background research task: {response_id}", flush=True)
+                except Exception as e:
+                    # If creating the background task fails, keep request as pending
+                    # so it can be retried on the next poll
+                    db.rollback()
+                    print(f"❌ Failed to create background task for request {pending.id}: {e}", flush=True)
 
             # Check for processing requests and poll their status
             processing = get_processing_requests(db)
-
-            if processing:
-                print(
-                    f"🔍 Found {len(processing)} request(s) in processing state", flush=True)
 
             if processing:
                 print(

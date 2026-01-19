@@ -89,15 +89,15 @@ CRITICAL: Format your response as a valid JSON array. Each win must be a JSON ob
 
 Example format:
 [
-  {
+  {{
         "title": "Example Union Victory",
     "union_name": "Unite the Union",
     "emoji": "🏥",
     "date": "2026-01-10",
     "url": "https://example.com/article",
     "summary": "A brief summary of the victory."
-  },
-  {...}
+  }},
+  {{...}}
 ]
 
 Return ONLY the JSON array, no additional text before or after."""
