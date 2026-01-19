@@ -14,12 +14,7 @@ export default defineConfig({
                 },
             },
         },
-        minify: 'terser',
-        terserOptions: {
-            compress: {
-                drop_console: true,
-            },
-        },
+        minify: 'esbuild',
     },
     server: {
         port: 3000,
