@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 import threading
 import time
 import json
+from datetime import datetime, timedelta
 
 from src.config import ALLOWED_ORIGINS, POLLING_INTERVAL_SECONDS, PORT
 from src.database import get_db, init_db
@@ -127,6 +128,17 @@ def process_pending_requests() -> None:
 
             for request in processing:
                 try:
+                    # Check if task has been stuck for too long (12+ hours)
+                    time_elapsed = datetime.now() - request.created_at
+                    if time_elapsed > timedelta(hours=12):
+                        print(
+                            f"⏰ Task {request.response_id} stuck for {time_elapsed} - marking as failed", flush=True)
+                        update_request_status(
+                            db, request, "failed",
+                            error_message=f"Task timeout after {time_elapsed}. OpenAI response may have failed."
+                        )
+                        continue
+
                     # Poll the response status
                     print(
                         f"🔎 Polling status for task {request.response_id}...", flush=True)
@@ -176,8 +188,10 @@ def process_pending_requests() -> None:
                     db.rollback()
                     print(
                         f"❌ Error polling request {request.id}: {e}", flush=True)
-                    update_request_status(
-                        db, request, "failed", error_message=str(e))
+                    # Don't mark as failed immediately - could be transient error
+                    # Let the timeout mechanism handle it after 12 hours
+                    import traceback
+                    traceback.print_exc()
 
         except Exception as e:
             # Roll back the session on any error
