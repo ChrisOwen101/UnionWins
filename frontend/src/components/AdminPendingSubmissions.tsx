@@ -13,8 +13,8 @@ export function AdminPendingSubmissions() {
             if (!response.ok) throw new Error('Failed to fetch pending submissions')
             const data = await response.json()
             setPendingWins(data)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch submissions')
         } finally {
             setLoading(false)
         }
@@ -44,8 +44,8 @@ export function AdminPendingSubmissions() {
 
             // Remove the reviewed item from the list
             setPendingWins(prev => prev.filter(win => win.id !== id))
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to process review')
         } finally {
             setProcessingId(null)
         }

@@ -46,8 +46,8 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
                 onClose()
                 setSuccess(false)
             }, 2000)
-        } catch (err: any) {
-            setError(err.message || 'Failed to submit. Please try again.')
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to submit. Please try again.')
         } finally {
             setIsSubmitting(false)
         }

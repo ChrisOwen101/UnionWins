@@ -81,7 +81,7 @@ export function AdminRecentWins() {
         }
     }
 
-    const cancelEdit = (id: number) => {
+    const cancelEdit = () => {
         // Refresh to get original data
         fetchRecentWins()
     }
@@ -186,7 +186,7 @@ export function AdminRecentWins() {
                                         Save
                                     </button>
                                     <button
-                                        onClick={() => cancelEdit(win.id)}
+                                        onClick={() => cancelEdit()}
                                         className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
                                     >
                                         Cancel

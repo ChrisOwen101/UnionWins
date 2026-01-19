@@ -93,6 +93,30 @@ export const useWins = (): UseWinsResult => {
         }
     }, [monthOffset, loadingMore, hasMore, isSearching])
 
+    // Clear search and reload initial data - define first so searchWins can depend on it
+    const clearSearch = useCallback(async () => {
+        setIsSearching(false)
+        setSearchQuery('')
+        setMonthOffset(0)
+
+        try {
+            setLoading(true)
+            const response = await fetch('/api/wins/paginated?month_offset=0&num_months=3')
+            if (!response.ok) {
+                throw new Error('Failed to fetch wins')
+            }
+            const data: PaginatedResponse = await response.json()
+            setWins(data.wins)
+            setHasMore(data.has_more)
+            setMonthOffset(3)
+        } catch (err) {
+            console.error('Error fetching wins:', err)
+            setError(err as Error)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
     // Search wins via API
     const searchWins = useCallback(async (query: string) => {
         if (!query.trim()) {
@@ -119,31 +143,7 @@ export const useWins = (): UseWinsResult => {
         } finally {
             setLoading(false)
         }
-    }, [])
-
-    // Clear search and reload initial data
-    const clearSearch = useCallback(async () => {
-        setIsSearching(false)
-        setSearchQuery('')
-        setMonthOffset(0)
-
-        try {
-            setLoading(true)
-            const response = await fetch('/api/wins/paginated?month_offset=0&num_months=3')
-            if (!response.ok) {
-                throw new Error('Failed to fetch wins')
-            }
-            const data: PaginatedResponse = await response.json()
-            setWins(data.wins)
-            setHasMore(data.has_more)
-            setMonthOffset(3)
-        } catch (err) {
-            console.error('Error fetching wins:', err)
-            setError(err as Error)
-        } finally {
-            setLoading(false)
-        }
-    }, [])
+    }, [clearSearch])
 
     return {
         wins,
