@@ -39,6 +39,31 @@ class ReviewWinRequest(BaseModel):
     action: str  # 'approve' or 'reject'
 
 
+class UpdateWinRequest(BaseModel):
+    """Schema for updating an existing win."""
+    title: str | None = None
+    union_name: str | None = None
+    emoji: str | None = None
+    date: str | None = None
+    url: str | None = None
+    summary: str | None = None
+
+
+class PaginatedWinsResponse(BaseModel):
+    """Schema for paginated wins response."""
+    wins: list[UnionWin]
+    months: list[str]
+    has_more: bool
+    total_months: int
+
+
+class WinsSearchResponse(BaseModel):
+    """Schema for wins search response."""
+    wins: list[UnionWin]
+    query: str
+    total: int
+
+
 class SearchRequest(BaseModel):
     """Schema for search request with optional date parameter."""
     date: str | None = None  # Optional date in format YYYY-MM-DD

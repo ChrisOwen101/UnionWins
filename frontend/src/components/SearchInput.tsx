@@ -1,30 +1,79 @@
+import { useState, useEffect, useRef } from 'react'
+
 interface SearchInputProps {
-    value: string
-    onChange: (value: string) => void
+    onSearch: (query: string) => void
+    onClear: () => void
     placeholder?: string
+    isSearching?: boolean
 }
 
 /**
- * Search input component for filtering wins
+ * Search input component with debounced API search
  */
 export const SearchInput: React.FC<SearchInputProps> = ({
-    value,
-    onChange,
-    placeholder = 'Search...'
+    onSearch,
+    onClear,
+    placeholder = 'Search...',
+    isSearching = false
 }) => {
+    const [inputValue, setInputValue] = useState('')
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    useEffect(() => {
+        // Clear any existing timeout
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current)
+        }
+
+        // Debounce the search
+        debounceRef.current = setTimeout(() => {
+            if (inputValue.trim()) {
+                onSearch(inputValue)
+            } else {
+                onClear()
+            }
+        }, 300)
+
+        return () => {
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current)
+            }
+        }
+    }, [inputValue, onSearch, onClear])
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange(e.target.value)
+        setInputValue(e.target.value)
+    }
+
+    const handleClear = () => {
+        setInputValue('')
+        onClear()
     }
 
     return (
-        <div className="mb-6">
+        <div className="mb-6 relative">
             <input
                 type="text"
                 placeholder={placeholder}
-                value={value}
+                value={inputValue}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-10"
             />
+            {inputValue && (
+                <button
+                    onClick={handleClear}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    type="button"
+                    aria-label="Clear search"
+                >
+                    ✕
+                </button>
+            )}
+            {isSearching && inputValue && (
+                <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            )}
         </div>
     )
 }
