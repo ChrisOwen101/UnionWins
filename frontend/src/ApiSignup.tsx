@@ -17,7 +17,7 @@ function ApiSignup() {
                     <div className="prose">
                         <p className="text-gray-700 mb-6">
                             Want to build something with our union wins data? We offer free API access
-                            to developers, researchers, and organizations working to promote labor rights.
+                            to developers, researchers, and organisations working to promote labour rights.
                         </p>
 
                         <h2 className="text-xl font-semibold mt-8 mb-4">What you get</h2>
@@ -65,7 +65,7 @@ function ApiSignup() {
                         </p>
                         <ul className="list-disc list-inside text-gray-700 space-y-2 mb-6">
                             <li>Your name</li>
-                            <li>Your organization (if applicable)</li>
+                            <li>Your organisation (if applicable)</li>
                             <li>What you plan to build with the API</li>
                             <li>Expected usage volume</li>
                         </ul>
@@ -75,7 +75,7 @@ function ApiSignup() {
                                 Ready to get started?
                             </p>
                             <a
-                                href={`mailto:${developerEmail}?subject=Union%20Wins%20API%20Key%20Request&body=Hi%2C%0A%0AI%27d%20like%20to%20request%20an%20API%20key%20for%20the%20Union%20Wins%20API.%0A%0AName%3A%20%0AOrganization%3A%20%0AProject%20description%3A%20%0AExpected%20usage%3A%20%0A%0AThanks!`}
+                                href={`mailto:${developerEmail}?subject=Union%20Wins%20API%20Key%20Request&body=Hi%2C%0A%0AI%27d%20like%20to%20request%20an%20API%20key%20for%20the%20Union%20Wins%20API.%0A%0AName%3A%20%0AOrganisation%3A%20%0AProject%20description%3A%20%0AExpected%20usage%3A%20%0A%0AThanks!`}
                                 className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                             >
                                 📧 Email {developerEmail}

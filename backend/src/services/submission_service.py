@@ -35,11 +35,11 @@ def scrape_url_with_openai(url: str) -> dict:
             reasoning={"effort": "none"},
             input=f"""You are an expert at extracting information about union victories and labour wins from news articles and web pages.
 
-Analyze this URL: {url}
+Analyse this URL: {url}
 
 Extract the following information and return ONLY a valid JSON object with no other text:
 - title: string (clear, descriptive title)
-- union_name: string (name of the union or labour organization, e.g., "Unite", "GMB", "Unison", "TUC", etc)
+- union_name: string (name of the union or labour organisation, e.g., "Unite", "GMB", "Unison", "TUC", etc)
 - emoji: string (single emoji character that represents the win, e.g., "🏥", "🚌", "📚", "✊")
 - date: string (YYYY-MM-DD format)
 - url: string (credible source URL)

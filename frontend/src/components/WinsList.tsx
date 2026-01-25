@@ -26,6 +26,7 @@ export const WinsList: React.FC<WinsListProps> = ({
     const groupedWins = groupByMonth(wins)
     const observerRef = useRef<IntersectionObserver | null>(null)
     const loadMoreRef = useRef<HTMLDivElement>(null)
+    const resultsStatusId = 'results-status'
 
     const handleObserver = useCallback(
         (entries: IntersectionObserverEntry[]) => {
@@ -58,22 +59,32 @@ export const WinsList: React.FC<WinsListProps> = ({
 
     if (wins.length === 0 && searchQuery) {
         return (
-            <p className="text-center text-gray-700 text-sm py-8">
-                No wins found matching "{searchQuery}"
-            </p>
+            <div role="region" aria-labelledby={resultsStatusId} aria-live="polite" aria-atomic="true">
+                <p id={resultsStatusId} className="text-center text-gray-700 text-sm py-8">
+                    No wins found matching "{searchQuery}"
+                </p>
+            </div>
         )
     }
 
     if (wins.length === 0) {
         return (
-            <p className="text-center text-gray-700 text-sm py-8">
-                No wins to display
-            </p>
+            <div role="region" aria-labelledby={resultsStatusId} aria-live="polite" aria-atomic="true">
+                <p id={resultsStatusId} className="text-center text-gray-700 text-sm py-8">
+                    No wins to display
+                </p>
+            </div>
         )
     }
 
     return (
         <div className="space-y-8">
+            <div role="region" aria-labelledby={resultsStatusId}>
+                <p id={resultsStatusId} className="sr-only">
+                    {wins.length} union {wins.length === 1 ? 'win' : 'wins'} displayed
+                </p>
+            </div>
+
             {groupedWins.map(([monthKey, monthWins]) => (
                 <MonthSection
                     key={monthKey}
@@ -85,8 +96,9 @@ export const WinsList: React.FC<WinsListProps> = ({
             {/* Infinite scroll trigger */}
             <div ref={loadMoreRef} className="h-10">
                 {loadingMore && (
-                    <div className="flex justify-center py-4">
-                        <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="flex justify-center py-4" role="status" aria-live="polite">
+                        <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                        <span className="sr-only">Loading more wins</span>
                     </div>
                 )}
                 {!hasMore && wins.length > 0 && (
@@ -94,7 +106,8 @@ export const WinsList: React.FC<WinsListProps> = ({
                         You've reached the beginning.{' '}
                         <button
                             onClick={onSubmitClick}
-                            className="text-orange-500 hover:text-orange-600 font-medium"
+                            className="text-orange-600 hover:text-orange-700 font-medium"
+                            aria-label="Submit a new union win"
                         >
                             Submit a win
                         </button>

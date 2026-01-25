@@ -9,7 +9,10 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
     const [pendingWins, setPendingWins] = useState<PendingWin[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [errorId] = useState('pending-error')
     const [processingId, setProcessingId] = useState<number | null>(null)
+    const [successMessage, setSuccessMessage] = useState('')
+    const [successId] = useState('pending-success')
 
     const fetchPendingSubmissions = useCallback(async () => {
         try {
@@ -21,6 +24,7 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
             if (!response.ok) throw new Error('Failed to fetch pending submissions')
             const data = await response.json()
             setPendingWins(data)
+            setSuccessMessage('')
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch submissions')
         } finally {
@@ -35,6 +39,7 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
     const handleReview = async (id: number, action: 'approve' | 'reject') => {
         setProcessingId(id)
         setError('')
+        setSuccessMessage('')
 
         try {
             const response = await fetch(`/api/submissions/${id}/review`, {
@@ -53,6 +58,7 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
 
             // Remove the reviewed item from the list
             setPendingWins(prev => prev.filter(win => win.id !== id))
+            setSuccessMessage(`Submission ${action === 'approve' ? 'approved' : 'rejected'} successfully.`)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to process review')
         } finally {
@@ -64,7 +70,9 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
         return (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold mb-4">Pending Submissions</h2>
-                <p className="text-gray-500">Loading...</p>
+                <div role="status" aria-live="polite" aria-busy="true">
+                    <p className="text-gray-500">Loading...</p>
+                </div>
             </div>
         )
     }
@@ -72,30 +80,40 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Pending Submissions</h2>
+                <h2 className="text-xl font-bold">Pending Submissions ({pendingWins.length})</h2>
                 <button
                     onClick={fetchPendingSubmissions}
-                    className="text-sm text-blue-600 hover:text-blue-800"
+                    className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+                    aria-label="Refresh pending submissions"
                 >
                     Refresh
                 </button>
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div id={errorId} role="alert" className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                     <p className="text-red-800">{error}</p>
                 </div>
             )}
 
+            {successMessage && (
+                <div id={successId} role="status" aria-live="polite" className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <p className="text-green-800">{successMessage}</p>
+                </div>
+            )}
+
             {pendingWins.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                    No pending submissions to review
-                </p>
+                <div role="status" aria-live="polite">
+                    <p className="text-gray-500 text-center py-8">
+                        No pending submissions to review
+                    </p>
+                </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-4" role="list">
                     {pendingWins.map((win) => (
-                        <div
+                        <article
                             key={win.id}
+                            role="listitem"
                             className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                         >
                             <div className="flex gap-4">
@@ -105,14 +123,14 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
                                     </h3>
                                     {win.union_name && (
                                         <p className="text-sm text-gray-600 mb-2">
-                                            {win.emoji} {win.union_name}
+                                            <span aria-hidden="true">{win.emoji}</span> {win.union_name}
                                         </p>
                                     )}
                                     <p className="text-sm text-gray-700 mb-2 line-clamp-2">
                                         {win.summary}
                                     </p>
                                     <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
-                                        <span>📅 {win.date}</span>
+                                        <span aria-label={`Date: ${win.date}`}>📅 {win.date}</span>
                                         {win.submitted_by && (
                                             <span>👤 Submitted by: {win.submitted_by}</span>
                                         )}
@@ -121,7 +139,8 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
                                         href={win.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-sm text-blue-600 hover:underline truncate block"
+                                        className="text-sm text-blue-600 hover:underline truncate block focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                                        aria-label={`View article: ${win.title} (opens in new window)`}
                                     >
                                         {win.url}
                                     </a>
@@ -132,19 +151,21 @@ export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissio
                                 <button
                                     onClick={() => handleReview(win.id, 'approve')}
                                     disabled={processingId === win.id}
-                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                    aria-label={`Approve submission: ${win.title}`}
                                 >
                                     {processingId === win.id ? 'Processing...' : '✓ Approve'}
                                 </button>
                                 <button
                                     onClick={() => handleReview(win.id, 'reject')}
                                     disabled={processingId === win.id}
-                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                    aria-label={`Reject submission: ${win.title}`}
                                 >
                                     {processingId === win.id ? 'Processing...' : '✗ Reject'}
                                 </button>
                             </div>
-                        </div>
+                        </article>
                     ))}
                 </div>
             )}

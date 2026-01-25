@@ -18,17 +18,25 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onSubmitClick }
                         <p className="text-gray-600 mt-1">{subtitle}</p>
                     )}
                 </div>
-                <div className="flex items-center gap-4">
+                <nav aria-label="Primary navigation" className="flex items-center gap-4">
                     {onSubmitClick && (
                         <button
                             onClick={onSubmitClick}
-                            className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium"
+                            className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                             title="Submit a union win"
+                            aria-label="Open submit union win dialog"
                         >
                             + Submit
                         </button>
                     )}
-                </div>
+                    <a
+                        href="/admin"
+                        className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        aria-label="Admin dashboard"
+                    >
+                        Admin
+                    </a>
+                </nav>
             </div>
         </header>
     )

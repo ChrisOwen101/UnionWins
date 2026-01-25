@@ -98,18 +98,23 @@ export function NewsletterNotification({ delayMs = 7000 }: NewsletterNotificatio
 
     return (
         <div className="fixed bottom-4 right-4 z-40 animate-subtle-fade">
-            <div className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 w-80 overflow-hidden">
+            <div
+                role="region"
+                aria-label="Newsletter subscription"
+                className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 w-80 overflow-hidden"
+            >
                 {/* Header */}
                 <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2 flex justify-between items-center">
-                    <h3 className="text-white font-medium text-xs tracking-wide">
-                        ✊ Union Wins Updates
+                    <h3 id="newsletter-title" className="text-white font-medium text-xs tracking-wide">
+                        Get Notified
                     </h3>
                     <button
                         onClick={handleDismiss}
-                        className="text-white/60 hover:text-white/90 transition-colors duration-200"
-                        aria-label="Dismiss notification"
+                        className="text-white/60 hover:text-white/90 transition-colors duration-200 p-1 focus:outline-none focus:ring-2 focus:ring-white"
+                        aria-label="Dismiss newsletter notification"
+                        title="Dismiss (will reappear in 7 days)"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
@@ -118,62 +123,83 @@ export function NewsletterNotification({ delayMs = 7000 }: NewsletterNotificatio
                 {/* Content */}
                 <div className="p-3">
                     {success ? (
-                        <div className="text-center py-1">
-                            <div className="text-gray-600 text-sm mb-0.5">✓</div>
+                        <div className="text-center py-1" role="status" aria-live="polite">
+                            <div className="text-gray-600 text-sm mb-0.5" aria-hidden="true">✓</div>
                             <p className="text-gray-700 font-medium text-xs">You're subscribed!</p>
                             <p className="text-gray-500 text-xs">Check your inbox.</p>
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit} aria-labelledby="newsletter-title">
                             <p className="text-gray-600 text-xs mb-2.5 leading-relaxed">
-                                Get notified about union victories.
+                                Summarised updates on new Union Wins, delivered to your inbox.
                             </p>
 
                             <div className="space-y-2">
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="your@email.com"
-                                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent placeholder-gray-400"
-                                    disabled={isSubmitting}
-                                    required
-                                />
-
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Name (optional)"
-                                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent placeholder-gray-400"
-                                    disabled={isSubmitting}
-                                />
-
-                                <div className="flex gap-1">
-                                    {(['daily', 'weekly', 'monthly'] as const).map((freq) => (
-                                        <button
-                                            key={freq}
-                                            type="button"
-                                            onClick={() => setFrequency(freq)}
-                                            disabled={isSubmitting}
-                                            className={`flex-1 px-1.5 py-1 text-xs font-medium rounded transition-colors duration-150 ${frequency === freq
-                                                ? 'bg-gray-700 text-white'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                }`}
-                                        >
-                                            {freq.charAt(0).toUpperCase() + freq.slice(1)}
-                                        </button>
-                                    ))}
+                                <div>
+                                    <label htmlFor="newsletter-email" className="sr-only">
+                                        Email address
+                                    </label>
+                                    <input
+                                        id="newsletter-email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="your@email.com"
+                                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent placeholder-gray-400"
+                                        disabled={isSubmitting}
+                                        aria-required="true"
+                                        required
+                                    />
                                 </div>
 
+                                <div>
+                                    <label htmlFor="newsletter-name" className="sr-only">
+                                        Name (optional)
+                                    </label>
+                                    <input
+                                        id="newsletter-name"
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="Name (optional)"
+                                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent placeholder-gray-400"
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+
+                                <fieldset>
+                                    <legend className="text-xs font-medium text-gray-600 mb-1 block">
+                                        Frequency
+                                    </legend>
+                                    <div className="flex gap-1">
+                                        {(['daily', 'weekly', 'monthly'] as const).map((freq) => (
+                                            <button
+                                                key={freq}
+                                                type="button"
+                                                onClick={() => setFrequency(freq)}
+                                                disabled={isSubmitting}
+                                                className={`flex-1 px-1.5 py-1 text-xs font-medium rounded transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-500 ${frequency === freq
+                                                    ? 'bg-gray-700 text-white'
+                                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                    }`}
+                                                aria-pressed={frequency === freq}
+                                                aria-label={`${freq.charAt(0).toUpperCase() + freq.slice(1)} frequency`}
+                                            >
+                                                {freq.charAt(0).toUpperCase() + freq.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </fieldset>
+
                                 {error && (
-                                    <p className="text-gray-600 text-xs">{error}</p>
+                                    <p role="alert" className="text-red-600 text-xs">{error}</p>
                                 )}
 
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="w-full bg-gray-700 text-white py-1.5 px-3 rounded text-xs font-medium hover:bg-gray-600 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-gray-700 text-white py-1.5 px-3 rounded text-xs font-medium hover:bg-gray-600 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                    aria-label={isSubmitting ? 'Subscribing to newsletter' : 'Subscribe to newsletter'}
                                 >
                                     {isSubmitting ? 'Subscribing...' : 'Subscribe'}
                                 </button>

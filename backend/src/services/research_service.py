@@ -19,7 +19,7 @@ def create_research_input(date_range: str) -> str:
     Returns:
         Formatted research prompt
     """
-    return f"""Research and find as many recent trade union victories as you can, successful union organizing campaigns, and labour movement wins from {date_range} in the United Kingdom.
+    return f"""Research and find as many recent trade union victories as you can, successful union organising campaigns, and labour movement wins from {date_range} in the United Kingdom.
 
 Here is a list of major UK trade unions to consider, it is not exhaustive but should help guide your research:
 - Accord
@@ -72,7 +72,7 @@ Here is a list of major UK trade unions to consider, it is not exhaustive but sh
 Do:
 - Find specific, verified trade union victories and labour movement wins
 - Include exact dates, specific figures, and measurable outcomes where available
-- Identify the specific union or labour organization involved in each victory
+- Identify the specific union or labour organisation involved in each victory
 - Choose an appropriate emoji that represents the industry, sector, or type of victory (e.g., 🏥 for healthcare, 🚌 for transport, 📚 for education etc)
 - Prioritize reliable, up-to-date sources: official union websites, reputable news outlets (BBC, The Guardian, Reuters), government announcements
 - For each victory, provide: a clear descriptive title, union name, representative emoji, exact date (YYYY-MM-DD format), credible source URL, and a 2-3 sentence summary
@@ -81,7 +81,7 @@ Do:
 
 CRITICAL: Format your response as a valid JSON array. Each win must be a JSON object with these exact fields:
 - title: string (clear, descriptive title)
-- union_name: string (name of the union or labour organization, e.g., "Unite", "GMB", "Unison", "TUC", etc)
+- union_name: string (name of the union or labour organisation, e.g., "Unite", "GMB", "Unison", "TUC", etc)
 - emoji: string (single emoji character that represents the win, e.g., "🏥", "🚌", "📚", "✊")
 - date: string (YYYY-MM-DD format)
 - url: string (credible source URL)

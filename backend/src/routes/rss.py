@@ -38,7 +38,7 @@ def create_rss_feed(wins: list) -> str:
     link.text = 'https://unionwins.com'
 
     description = SubElement(channel, 'description')
-    description.text = 'Recent victories and wins by labor unions across various sectors'
+    description.text = 'Recent victories and wins by labour unions across various sectors'
 
     language = SubElement(channel, 'language')
     language.text = 'en-us'

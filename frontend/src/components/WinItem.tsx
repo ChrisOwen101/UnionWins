@@ -29,31 +29,32 @@ export const WinItem: React.FC<WinItemProps> = ({ win }) => {
             {isHovered && isDesktopDevice && <WinTooltip win={win} position={mousePosition} />}
 
             {win.emoji && (
-                <div className="text-2xl pt-0.5" aria-hidden="true">
+                <div className="text-2xl pt-0.5 flex-shrink-0" aria-hidden="true">
                     {win.emoji}
                 </div>
             )}
 
             <div className="flex-1 min-w-0">
-                <h2 className="text-base leading-snug">
+                <h3 className="text-base leading-snug">
                     <a
                         href={win.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-900 hover:text-gray-600"
+                        className="text-gray-900 hover:text-gray-600 hover:underline focus:outline-none focus:ring-2 focus:ring-orange-500 rounded"
                         onMouseEnter={() => setIsHovered(true)}
                         onMouseLeave={() => setIsHovered(false)}
                         onMouseMove={handleMouseMove}
+                        aria-label={`${win.title} (opens in new window)`}
                     >
                         {win.title}
                     </a>
-                </h2>
+                </h3>
                 <WinMetadata
                     unionName={win.union_name}
                     url={win.url}
                     date={win.date}
                 />
             </div>
-        </li >
+        </li>
     )
 }

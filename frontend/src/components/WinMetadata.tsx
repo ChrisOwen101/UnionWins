@@ -23,19 +23,22 @@ export const WinMetadata: React.FC<WinMetadataProps> = ({
             {unionName && (
                 <>
                     <span className="font-medium">{unionName}</span>
-                    <span>·</span>
+                    <span aria-hidden="true">·</span>
                 </>
             )}
             <a
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-orange-500 hover:underline"
+                className="text-orange-600 hover:underline focus:outline-none focus:ring-2 focus:ring-orange-500 rounded"
+                title={`Open article from ${domain}`}
             >
                 {domain}
             </a>
-            <span>·</span>
-            <span>{formattedDate}</span>
+            <span aria-hidden="true">·</span>
+            <time dateTime={date} title={formattedDate}>
+                {formattedDate}
+            </time>
         </div>
     )
 }

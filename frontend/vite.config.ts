@@ -15,6 +15,11 @@ export default defineConfig({
             },
         },
         minify: 'esbuild',
+        cssCodeSplit: false,
+        chunkSizeWarningLimit: 500,
+        reportCompressedSize: false, modulePreload: {
+            polyfill: false,
+        },
     },
     server: {
         port: 3000,

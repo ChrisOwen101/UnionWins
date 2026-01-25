@@ -4,8 +4,25 @@ import Admin from './Admin'
 import ApiSignup from './ApiSignup'
 
 function App() {
+    const skipToMainContent = () => {
+        const mainContent = document.getElementById('main-content')
+        if (mainContent) {
+            mainContent.focus()
+            mainContent.scrollIntoView()
+        }
+    }
+
     return (
         <Router>
+            {/* Skip to main content link for keyboard navigation */}
+            <a
+                href="#main-content"
+                onClick={skipToMainContent}
+                className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2"
+            >
+                Skip to main content
+            </a>
+
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/admin" element={<Admin />} />

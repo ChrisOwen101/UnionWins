@@ -79,7 +79,7 @@ def generate_email_html(wins: List[UnionWinDB], subscriber_name: str | None, fre
                 </p>
                 
                 <p style="font-size: 14px; color: #374151; margin: 0 0 24px 0; line-height: 1.6;">
-                    Here are the latest union victories from {period}. These wins show the power of workers organizing together.
+                    Here are the latest union victories from {period}. These wins show the power of workers organising together.
                 </p>
                 
                 <!-- Wins List -->
@@ -173,6 +173,12 @@ def send_daily_newsletters(db: Session) -> int:
             timedelta(days=1)
         wins = get_wins_since(db, since)
 
+        # Skip sending if there are no wins
+        if not wins:
+            print(
+                f"⏭️  Skipping {subscriber.frequency} newsletter to {subscriber.email} - no wins to report", flush=True)
+            continue
+
         if send_newsletter_email(subscriber, wins, db):
             sent_count += 1
 
@@ -194,6 +200,12 @@ def send_weekly_newsletters(db: Session) -> int:
             timedelta(days=7)
         wins = get_wins_since(db, since)
 
+        # Skip sending if there are no wins
+        if not wins:
+            print(
+                f"⏭️  Skipping {subscriber.frequency} newsletter to {subscriber.email} - no wins to report", flush=True)
+            continue
+
         if send_newsletter_email(subscriber, wins, db):
             sent_count += 1
 
@@ -214,6 +226,12 @@ def send_monthly_newsletters(db: Session) -> int:
         since = subscriber.last_email_sent_at if subscriber.last_email_sent_at else datetime.now() - \
             timedelta(days=30)
         wins = get_wins_since(db, since)
+
+        # Skip sending if there are no wins
+        if not wins:
+            print(
+                f"⏭️  Skipping {subscriber.frequency} newsletter to {subscriber.email} - no wins to report", flush=True)
+            continue
 
         if send_newsletter_email(subscriber, wins, db):
             sent_count += 1

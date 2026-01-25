@@ -45,7 +45,7 @@ function Home() {
                 onSubmitClick={() => setIsSubmitModalOpen(true)}
             />
 
-            <main className="max-w-3xl mx-auto px-5 py-6">
+            <main id="main-content" className="max-w-3xl mx-auto px-5 py-6" tabIndex={-1}>
                 <SearchInput
                     onSearch={searchWins}
                     onClear={clearSearch}

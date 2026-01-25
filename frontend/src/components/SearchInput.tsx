@@ -18,6 +18,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 }) => {
     const [inputValue, setInputValue] = useState('')
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const statusId = useRef('search-status')
 
     useEffect(() => {
         // Clear any existing timeout
@@ -52,26 +53,38 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
     return (
         <div className="mb-6 relative">
+            <label htmlFor="search-input" className="sr-only">
+                Search wins
+            </label>
             <input
-                type="text"
+                id="search-input"
+                type="search"
                 placeholder={placeholder}
                 value={inputValue}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-10"
+                aria-describedby={isSearching ? statusId.current : undefined}
+                autoComplete="off"
             />
             {inputValue && (
                 <button
                     onClick={handleClear}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
                     type="button"
                     aria-label="Clear search"
+                    title="Clear search (Ctrl+A then Delete)"
                 >
                     ✕
                 </button>
             )}
             {isSearching && inputValue && (
-                <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                <div className="absolute right-10 top-1/2 -translate-y-1/2" aria-label="Searching">
                     <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            )}
+            {isSearching && (
+                <div id={statusId.current} className="sr-only" role="status" aria-live="polite">
+                    Searching for "{inputValue}"
                 </div>
             )}
         </div>
