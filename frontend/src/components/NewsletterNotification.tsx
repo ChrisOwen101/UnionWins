@@ -131,7 +131,7 @@ export function NewsletterNotification({ delayMs = 5000 }: NewsletterNotificatio
                     ) : (
                         <form onSubmit={handleSubmit} aria-labelledby="newsletter-title">
                             <p className="text-gray-600 text-xs mb-2.5 leading-relaxed">
-                                Summarised updates on new Union Wins, delivered to your inbox.
+                                Summarised updates on new Union achievements, delivered to your inbox.
                             </p>
 
                             <div className="space-y-2">
