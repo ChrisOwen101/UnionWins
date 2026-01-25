@@ -73,7 +73,7 @@ function Home() {
                 onSubmit={handleSubmitWin}
             />
 
-            <NewsletterNotification delayMs={10000} />
+            <NewsletterNotification delayMs={5000} />
         </div>
     )
 }
