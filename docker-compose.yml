@@ -9,6 +9,7 @@ services:
       - PORT=80
       - DATABASE_URL=${DATABASE_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL_SECONDS:-5}
     volumes:
       - unionwins-data:/app/data
