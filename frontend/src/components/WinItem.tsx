@@ -51,6 +51,7 @@ export const WinItem: React.FC<WinItemProps> = ({ win }) => {
                 </h3>
                 <WinMetadata
                     unionName={win.union_name}
+                    winTypes={win.win_types}
                     url={win.url}
                     date={win.date}
                 />

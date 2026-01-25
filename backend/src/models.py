@@ -8,6 +8,86 @@ from datetime import datetime
 Base = declarative_base()
 
 
+# Define valid win types as a constant for reference
+WIN_TYPES = [
+    "Pay Rise",
+    "Recognition",
+    "Strike Action",
+    "Working Conditions",
+    "Job Security",
+    "Benefits",
+    "Health & Safety",
+    "Equality",
+    "Legal Victory",
+    "Organising",
+    "Other",
+]
+
+
+# Canonical list of major UK trade unions
+UK_UNIONS = [
+    "Accord",
+    "Advance",
+    "Aegis the Union",
+    "Artists' Union England (AUE)",
+    "Associated Society of Locomotive Engineers and Firemen (ASLEF)",
+    "Association of Educational Psychologists (AEP)",
+    "Association of Flight Attendants (AFA)",
+    "Association of Headteachers and Deputes in Scotland (AHDS)",
+    "Association of School and College Leaders (ASCL)",
+    "Bakers, Food and Allied Workers Union (BFAWU)",
+    "British Airline Pilots' Association (BALPA)",
+    "British Association of Dental Nurses (BADN)",
+    "British Association of Occupational Therapists (BAOT)",
+    "British Dietetic Association (BDA)",
+    "British Medical Association (BMA)",
+    "British Orthoptic Society Trade Union (BOSTU)",
+    "Chartered Society of Physiotherapy (CSP)",
+    "Communication Workers Union (CWU)",
+    "Community",
+    "Educational Institute of Scotland (EIS)",
+    "Equity",
+    "FDA",
+    "Fire Brigades Union (FBU)",
+    "GMB",
+    "Hospital Consultants and Specialists Association (HCSA)",
+    "Independent Workers' Union of Great Britain (IWGB)",
+    "Industrial Workers of the World (IWW)",
+    "Musicians' Union (MU)",
+    "National Association of Head Teachers (NAHT)",
+    "National Association of Probation Officers (NAPO)",
+    "National Association of Racing Staff (NARS)",
+    "National Association of Schoolmasters Union of Women Teachers (NASUWT)",
+    "National Education Union (NEU)",
+    "National House Building Council Staff Association (NHBCSA)",
+    "National Society for Education in Art and Design (NSEAD)",
+    "National Union of Journalists (NUJ)",
+    "National Union of Mineworkers (NUM)",
+    "National Union of Professional Foster Carers (NUPFC)",
+    "National Union of Rail, Maritime and Transport Workers (RMT)",
+    "Nationwide Group Staff Union (NGSU)",
+    "Nautilus UK",
+    "Prison Officers Association (POA)",
+    "Professional Footballers' Association (PFA)",
+    "Prospect",
+    "Public and Commercial Services Union (PCS)",
+    "Royal College of Midwives (RCM)",
+    "Royal College of Nursing (RCN)",
+    "Royal College of Podiatry (RCPod)",
+    "Society of Radiographers (SoR)",
+    "Trades Union Congress (TUC)",
+    "Transport Salaried Staffs' Association (TSSA)",
+    "Undeb Cenedlaethol Athrawon Cymru (UCAC)",
+    "Union of Shop, Distributive and Allied Workers (USDAW)",
+    "Unison",
+    "Unite the Union",
+    "United Road Transport Union (URTU)",
+    "United Voices of the World (UVW)",
+    "University and College Union (UCU)",
+    "Writers' Guild of Great Britain (WGGB)",
+]
+
+
 class UnionWinDB(Base):
     """Model representing a union victory or win."""
     __tablename__ = "union_wins"
@@ -16,6 +96,8 @@ class UnionWinDB(Base):
     title = Column(String, nullable=False)
     union_name = Column(String, nullable=True)
     emoji = Column(String, nullable=True)
+    # Types of win from predefined list (up to 2, comma-separated)
+    win_types = Column(String, nullable=True, index=True)
     date = Column(String, nullable=False)
     url = Column(String, nullable=False, unique=True, index=True)
     summary = Column(Text, nullable=False)

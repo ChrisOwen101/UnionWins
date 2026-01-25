@@ -49,6 +49,24 @@ def init_db():
                 conn.commit()
                 print("emoji column added successfully!")
 
+            if 'win_type' not in columns:
+                # Add the win_type column to existing table
+                print("Adding win_type column to union_wins table...")
+                conn.execute(
+                    text("ALTER TABLE union_wins ADD COLUMN win_type VARCHAR")
+                )
+                conn.commit()
+                print("win_type column added successfully!")
+
+            if 'win_types' not in columns:
+                # Add the win_types column to existing table (supports multiple types)
+                print("Adding win_types column to union_wins table...")
+                conn.execute(
+                    text("ALTER TABLE union_wins ADD COLUMN win_types VARCHAR")
+                )
+                conn.commit()
+                print("win_types column added successfully!")
+
             # Add unique constraint on url if it doesn't exist
             try:
                 constraints = inspector.get_unique_constraints('union_wins')

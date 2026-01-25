@@ -4,6 +4,7 @@ API routes for What Have Unions Done For Us endpoints.
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from src.database import get_db
+from src.models import UK_UNIONS
 from src.schemas import UnionWin, UpdateWinRequest, PaginatedWinsResponse, WinsSearchResponse
 from src.services.win_service import (
     get_all_wins_sorted,
@@ -46,6 +47,18 @@ async def get_wins(
                 detail="API key required. Include X-API-Key header. Get your key at /api-signup"
             )
     return get_all_wins_sorted(db)
+
+
+@router.get("/unions")
+async def get_unions() -> list[str]:
+    """
+    Get the canonical list of UK trade unions.
+    This endpoint is public and doesn't require authentication.
+    
+    Returns:
+        List of union names in alphabetical order
+    """
+    return UK_UNIONS
 
 
 @router.get("/paginated")

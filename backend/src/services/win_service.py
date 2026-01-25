@@ -36,6 +36,7 @@ def convert_db_win_to_schema(win_db: UnionWinDB) -> UnionWin:
         title=win_db.title,
         union_name=win_db.union_name,
         emoji=win_db.emoji,
+        win_types=win_db.win_types,
         date=win_db.date,
         url=win_db.url,
         summary=win_db.summary
@@ -112,6 +113,8 @@ def update_win(db: Session, win_id: int, update_data: UpdateWinRequest) -> Union
         win_db.union_name = update_data.union_name
     if update_data.emoji is not None:
         win_db.emoji = update_data.emoji
+    if update_data.win_types is not None:
+        win_db.win_types = update_data.win_types
     if update_data.date is not None:
         win_db.date = update_data.date
     if update_data.url is not None:

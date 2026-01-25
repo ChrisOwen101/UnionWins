@@ -3,10 +3,11 @@ Service for handling deep research operations using OpenAI.
 """
 import json
 import re
+from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from src.config import client
-from src.models import SearchRequestDB, UnionWinDB
+from src.models import SearchRequestDB, UnionWinDB, UK_UNIONS
 
 
 def create_research_input(date_range: str) -> str:
@@ -19,63 +20,23 @@ def create_research_input(date_range: str) -> str:
     Returns:
         Formatted research prompt
     """
+    # Format union list as bullet points
+    union_list = "\n".join(f"- {union}" for union in UK_UNIONS)
+    
     return f"""Research and find as many recent trade union victories as you can, successful union organising campaigns, and labour movement wins from {date_range} in the United Kingdom.
 
 Here is a list of major UK trade unions to consider, it is not exhaustive but should help guide your research:
-- Accord
-- Advance
-- Aegis the Union
-- Artists' Union England (AUE)
-- ASLEF (Associated Society of Locomotive Engineers and Firemen)
-- Association of Educational Psychologists (AEP)
-- Association of Flight Attendants (AFA)
-- BFAWU (Bakers, Food and Allied Workers Union)
-- BALPA (British Airline Pilots' Association)
-- British Dietetic Association (BDA)
-- British Orthoptic Society Trade Union (BOSTU)
-- CSP (Chartered Society of Physiotherapy)
-- CWU (Communication Workers Union)
-- EIS (Educational Institute of Scotland) 
-- Equity
-- FDA
-- FBU (Fire Brigades Union)
-- GMB
-- HCSA (Hospital Consultants and Specialists Association)
-- MU (Musicians' Union)
-- NAPO (National Association of Probation Officers)
-- NAHT (National Association of Head Teachers)
-- NARS (National Association of Racing Staff)
-- NASUWT (National Association of Schoolmasters Union of Women Teachers)
-- NEU (National Education Union)
-- NUJ (National Union of Journalists)
-- NUM (National Union of Mineworkers)
-- NGSU (Nationwide Group Staff Union)
-- Nautilus UK
-- POA (Prison Officers Association), 
-- PFA (Professional Footballers' Association)
-- Prospect
-- PCS (Public and Commercial Services Union)
-- RMT (National Union of Rail, Maritime and Transport Workers)
-- RCM (Royal College of Midwives)
-- RCPod (Royal College of Podiatry)
-- SoR (Society of Radiographers)
-- TSSA (Transport Salaried Staffs' Association)
-- UCAC (Undeb Cenedlaethol Athrawon Cymru)
-- USDAW (Union of Shop, Distributive and Allied Workers)
-- Unison
-- Unite the Union
-- URTU (United Road Transport Union)
-- UCU (University and College Union)
-- WGGB (Writers' Guild of Great Britain)
-- TUC (Trades Union Congress)
+{union_list}
+
 
 Do:
 - Find specific, verified trade union victories and labour movement wins
 - Include exact dates, specific figures, and measurable outcomes where available
 - Identify the specific union or labour organisation involved in each victory
 - Choose an appropriate emoji that represents the industry, sector, or type of victory (e.g., 🏥 for healthcare, 🚌 for transport, 📚 for education etc)
+- Categorize each win with up to 2 appropriate types from this list: "Pay Rise", "Recognition", "Strike Action", "Working Conditions", "Job Security", "Benefits", "Health & Safety", "Equality", "Legal Victory", "Organizing", "Other"
 - Prioritize reliable, up-to-date sources: official union websites, reputable news outlets (BBC, The Guardian, Reuters), government announcements
-- For each victory, provide: a clear descriptive title, union name, representative emoji, exact date (YYYY-MM-DD format), credible source URL, and a 2-3 sentence summary
+- For each victory, provide: a clear descriptive title, union name, representative emoji, primary type and optional secondary type, exact date (YYYY-MM-DD format), credible source URL, and a 2-3 sentence summary
 - Include inline citations for each win
 - Only include actual verified wins, not speculation or ongoing negotiations
 
@@ -83,6 +44,8 @@ CRITICAL: Format your response as a valid JSON array. Each win must be a JSON ob
 - title: string (clear, descriptive title)
 - union_name: string (name of the union or labour organisation, e.g., "Unite", "GMB", "Unison", "TUC", etc)
 - emoji: string (single emoji character that represents the win, e.g., "🏥", "🚌", "📚", "✊")
+- primary_type: string (primary classification, one of: "Pay Rise", "Recognition", "Strike Action", "Working Conditions", "Job Security", "Benefits", "Health & Safety", "Equality", "Legal Victory", "Organizing", "Other")
+- secondary_type: string or null (optional secondary type if the win genuinely fits multiple categories - use null if only one type applies)
 - date: string (YYYY-MM-DD format)
 - url: string (credible source URL)
 - summary: string (3-5 sentence summary)
@@ -93,6 +56,8 @@ Example format:
         "title": "Example Union Victory",
     "union_name": "Unite the Union",
     "emoji": "🏥",
+    "primary_type": "Pay Rise",
+    "secondary_type": null,
     "date": "2026-01-10",
     "url": "https://example.com/article",
     "summary": "A brief summary of the victory."
@@ -123,7 +88,7 @@ def create_background_task(research_input: str) -> str:
     return response.id
 
 
-def poll_task_status(response_id: str) -> tuple[str, str | None]:
+def poll_task_status(response_id: str) -> Tuple[str, Optional[str]]:
     """
     Poll the status of a background research task.
 
@@ -200,6 +165,8 @@ The JSON should be an array of objects with these fields:
 - title: string
 - union_name: string or null
 - emoji: string (single emoji)
+- primary_type: string (one of: "Pay Rise", "Recognition", "Strike Action", "Working Conditions", "Job Security", "Benefits", "Health & Safety", "Equality", "Legal Victory", "Organizing", "Other")
+- secondary_type: string or null (optional)
 - date: string (YYYY-MM-DD format)
 - url: string
 - summary: string
@@ -273,10 +240,19 @@ def create_win_from_data(win_data: dict) -> UnionWinDB:
     Returns:
         UnionWinDB instance
     """
+    # Combine primary and secondary types into comma-separated string
+    types = []
+    if win_data.get('primary_type'):
+        types.append(win_data['primary_type'])
+    if win_data.get('secondary_type'):
+        types.append(win_data['secondary_type'])
+    win_types_str = ", ".join(types) if types else None
+    
     return UnionWinDB(
         title=win_data['title'],
         union_name=win_data.get('union_name'),
         emoji=win_data.get('emoji', '✊'),
+        win_types=win_types_str,
         date=win_data['date'],
         url=win_data['url'],
         summary=win_data['summary']
@@ -349,7 +325,7 @@ def update_request_status(
     request: SearchRequestDB,
     status: str,
     new_wins_found: int = 0,
-    error_message: str | None = None
+    error_message: Optional[str] = None
 ) -> None:
     """
     Update the status of a search request.

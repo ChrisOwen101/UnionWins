@@ -41,6 +41,8 @@ Extract the following information and return ONLY a valid JSON object with no ot
 - title: string (clear, descriptive title)
 - union_name: string (name of the union or labour organisation, e.g., "Unite", "GMB", "Unison", "TUC", etc)
 - emoji: string (single emoji character that represents the win, e.g., "🏥", "🚌", "📚", "✊")
+- primary_type: string (primary type, one of: "Pay Rise", "Recognition", "Strike Action", "Working Conditions", "Job Security", "Benefits", "Health & Safety", "Equality", "Legal Victory", "Organizing", "Other")
+- secondary_type: string or null (optional secondary type if the win fits multiple categories - use null if only one type applies)
 - date: string (YYYY-MM-DD format)
 - url: string (credible source URL)
 - summary: string (3-5 sentence summary)
@@ -58,6 +60,14 @@ Return ONLY the JSON object with these exact keys, no markdown formatting, no ex
             result["date"] = datetime.now().strftime("%Y-%m-%d")
         if not result.get("summary"):
             result["summary"] = "A victory for workers and their union."
+        
+        # Combine primary and secondary types into comma-separated string
+        types = []
+        if result.get("primary_type"):
+            types.append(result["primary_type"])
+        if result.get("secondary_type"):
+            types.append(result["secondary_type"])
+        result["win_types"] = ", ".join(types) if types else None
 
         return result
 
@@ -98,7 +108,8 @@ def create_submission(db: Session, url: str, submitted_by: str | None = None) ->
     submission = UnionWinDB(
         title=scraped_data["title"],
         union_name=scraped_data.get("union_name"),
-        emoji=None,  # Admin can set this later
+        emoji=scraped_data.get("emoji"),
+        win_types=scraped_data.get("win_types"),
         date=scraped_data["date"],
         url=url,
         summary=scraped_data["summary"],

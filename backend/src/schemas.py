@@ -10,6 +10,7 @@ class UnionWin(BaseModel):
     title: str
     union_name: str | None
     emoji: str | None
+    win_types: str | None  # Comma-separated list of up to 2 types
     date: str
     url: str
     summary: str
@@ -21,6 +22,7 @@ class PendingWin(BaseModel):
     title: str
     union_name: str | None
     emoji: str | None
+    win_types: str | None  # Comma-separated list of up to 2 types
     date: str
     url: str
     summary: str
@@ -44,6 +46,7 @@ class UpdateWinRequest(BaseModel):
     title: str | None = None
     union_name: str | None = None
     emoji: str | None = None
+    win_types: str | None = None  # Comma-separated list of up to 2 types
     date: str | None = None
     url: str | None = None
     summary: str | None = None

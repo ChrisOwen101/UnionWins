@@ -52,6 +52,7 @@ async def get_pending(
             title=s.title,
             union_name=s.union_name,
             emoji=s.emoji,
+            win_types=s.win_types,
             date=s.date,
             url=s.url,
             summary=s.summary,

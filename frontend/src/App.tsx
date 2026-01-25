@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Home from './Home'
 import Admin from './Admin'
 import ApiSignup from './ApiSignup'
+import Stats from './Stats'
 
 function App() {
     const skipToMainContent = () => {
@@ -27,6 +28,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/api-signup" element={<ApiSignup />} />
+                <Route path="/stats" element={<Stats />} />
             </Routes>
         </Router>
     )

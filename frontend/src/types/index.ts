@@ -1,8 +1,29 @@
+// Valid win types matching backend WIN_TYPES
+export const WIN_TYPES = [
+    'Pay Rise',
+    'Recognition',
+    'Strike Action',
+    'Working Conditions',
+    'Job Security',
+    'Benefits',
+    'Health & Safety',
+    'Equality',
+    'Legal Victory',
+    'Organizing',
+    'Other',
+] as const
+
+export type WinType = typeof WIN_TYPES[number]
+
+// UK Unions list will be fetched from API
+export type UnionName = string
+
 export interface UnionWin {
     id: number
     title: string
     union_name?: string
     emoji?: string
+    win_types?: string // Comma-separated list of win types from backend
     date: string
     url: string
     summary: string
@@ -13,6 +34,7 @@ export interface PendingWin {
     title: string
     union_name?: string
     emoji?: string
+    win_types?: string // Comma-separated list of win types from backend
     date: string
     url: string
     summary: string

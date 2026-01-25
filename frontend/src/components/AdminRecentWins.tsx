@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { UnionWin } from '../types'
+import { UnionWin, WIN_TYPES } from '../types'
 
 interface EditingWin extends UnionWin {
     isEditing: boolean
@@ -121,6 +121,7 @@ export function AdminRecentWins({ adminPassword }: AdminRecentWinsProps) {
                     title: win.title,
                     union_name: win.union_name,
                     emoji: win.emoji,
+                    win_types: win.win_types,
                     date: win.date,
                     url: win.url,
                     summary: win.summary,
@@ -231,6 +232,21 @@ export function AdminRecentWins({ adminPassword }: AdminRecentWinsProps) {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Win Type
+                                    </label>
+                                    <select
+                                        value={win.win_types || ''}
+                                        onChange={(e) => updateField(win.id, 'win_types', e.target.value)}
+                                        className="w-full border rounded px-3 py-2"
+                                    >
+                                        <option value="">Select type...</option>
+                                        {WIN_TYPES.map(type => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Date
                                     </label>
                                     <input
@@ -288,7 +304,14 @@ export function AdminRecentWins({ adminPassword }: AdminRecentWinsProps) {
                                             {win.union_name && (
                                                 <p className="text-sm text-gray-600">{win.union_name}</p>
                                             )}
-                                            <p className="text-sm text-gray-500">{win.date}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-gray-500">{win.date}</p>
+                                                {win.win_types && (
+                                                    <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-xs font-medium">
+                                                        {win.win_types}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="flex gap-2 flex-shrink-0">
