@@ -29,13 +29,6 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onSubmitClick }
                             + Submit
                         </button>
                     )}
-                    <a
-                        href="/admin"
-                        className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        aria-label="Admin dashboard"
-                    >
-                        Admin
-                    </a>
                 </nav>
             </div>
         </header>
