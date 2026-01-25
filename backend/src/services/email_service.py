@@ -31,7 +31,7 @@ def generate_email_html(wins: List[UnionWinDB], subscriber_name: str | None, fre
     for win in wins:
         emoji = win.emoji if win.emoji else "✊"
         union = f" - {win.union_name}" if win.union_name else ""
-        
+
         # Remove markdown links from summary
         summary_text = remove_markdown_links(win.summary)
 
