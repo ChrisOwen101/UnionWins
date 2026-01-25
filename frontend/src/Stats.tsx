@@ -8,8 +8,6 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    PieChart,
-    Pie,
     Cell,
     LineChart,
     Line,
@@ -32,8 +30,28 @@ const COLORS = [
     '#84cc16', // lime-500
 ]
 
+/**
+ * Extract acronym from union name if it has brackets at the end
+ * Returns the acronym if found, null otherwise
+ */
+const extractAcronymFromName = (name: string): string | null => {
+    const match = name.match(/\(([^)]+)\)\s*$/)
+    return match ? match[1] : null
+}
+
+/**
+ * Generate display name for union - shows acronym in brackets if found in name, otherwise full name
+ */
+const getUnionDisplayName = (name: string): string => {
+    const existingAcronym = extractAcronymFromName(name)
+    if (existingAcronym) {
+        return `${name.replace(/\s*\([^)]*\)\s*$/, '')} (${existingAcronym})`
+    }
+    return name
+}
+
 interface StatsData {
-    unionCounts: { name: string; count: number }[]
+    unionCounts: { name: string; displayName: string; count: number }[]
     typeCounts: { name: string; count: number }[]
     monthlyTrends: { month: string; count: number }[]
     yearlyTrends: { year: string; count: number }[]
@@ -103,7 +121,14 @@ function Stats() {
             unionMap.set(union, (unionMap.get(union) || 0) + 1)
         })
         const unionCounts = Array.from(unionMap.entries())
-            .map(([name, count]) => ({ name, count }))
+            .map(([name, count]) => {
+                const displayName = getUnionDisplayName(name)
+                return {
+                    name,
+                    displayName,
+                    count,
+                }
+            })
             .sort((a, b) => b.count - a.count)
             .slice(0, 15) // Top 15 unions
 
@@ -286,28 +311,22 @@ function Stats() {
                     {/* Win Types Distribution */}
                     <ChartCard title="Wins by Type" subtitle="Distribution of win categories">
                         <ResponsiveContainer width="100%" height={350}>
-                            <PieChart>
-                                <Pie
-                                    data={stats.typeCounts}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    paddingAngle={2}
-                                    dataKey="count"
-                                    nameKey="name"
-                                    label={({ name, percent }) =>
-                                        `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
-                                    }
-                                    labelLine={{ stroke: '#9ca3af', strokeWidth: 1 }}
-                                >
-                                    {stats.typeCounts.map((_, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={COLORS[index % COLORS.length]}
-                                        />
-                                    ))}
-                                </Pie>
+                            <BarChart data={stats.typeCounts}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis
+                                    dataKey="name"
+                                    tick={{ fontSize: 12 }}
+                                    tickLine={false}
+                                    axisLine={{ stroke: '#e5e7eb' }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={100}
+                                />
+                                <YAxis
+                                    tick={{ fontSize: 12 }}
+                                    tickLine={false}
+                                    axisLine={{ stroke: '#e5e7eb' }}
+                                />
                                 <Tooltip
                                     formatter={(value) => [value, 'Wins']}
                                     contentStyle={{
@@ -316,7 +335,15 @@ function Stats() {
                                         borderRadius: '8px',
                                     }}
                                 />
-                            </PieChart>
+                                <Bar dataKey="count" fill="#f97316" radius={[4, 4, 0, 0]} name="Wins">
+                                    {stats.typeCounts.map((_, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={COLORS[index % COLORS.length]}
+                                        />
+                                    ))}
+                                </Bar>
+                            </BarChart>
                         </ResponsiveContainer>
                     </ChartCard>
 
@@ -369,16 +396,21 @@ function Stats() {
                             <XAxis type="number" tick={{ fontSize: 12 }} tickLine={false} />
                             <YAxis
                                 type="category"
-                                dataKey="name"
+                                dataKey="displayName"
                                 tick={{ fontSize: 11 }}
                                 tickLine={false}
-                                width={150}
+                                width={200}
                             />
                             <Tooltip
                                 contentStyle={{
                                     backgroundColor: 'white',
                                     border: '1px solid #e5e7eb',
                                     borderRadius: '8px',
+                                }}
+                                formatter={(value) => [value, 'Wins']}
+                                labelFormatter={(label) => {
+                                    const union = stats.unionCounts.find(u => u.displayName === label)
+                                    return union ? union.name : label
                                 }}
                             />
                             <Bar dataKey="count" fill="#f97316" radius={[0, 4, 4, 0]} name="Wins" />
