@@ -25,7 +25,7 @@ export const WinTooltip: React.FC<WinTooltipProps> = ({ win, position }) => {
             <h4 className="font-medium text-base mb-2">{win.title}</h4>
             {win.union_name && (
                 <p className="text-xs text-gray-300 mb-2">
-                    <span className="font-medium">Union:</span> {win.union_name}
+                    <strong>{win.union_name}</strong>
                 </p>
             )}
             {cleanSummary && (
