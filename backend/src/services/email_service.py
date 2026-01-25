@@ -92,9 +92,9 @@ def generate_email_html(wins: List[UnionWinDB], subscriber_name: str | None, fre
                     You're receiving this because you subscribed to union wins updates.
                 </p>
                 <p style="font-size: 12px; color: #6b7280; margin: 0;">
-                    <a href="https://unionwins.com" style="color: #ef4444; text-decoration: none;">Visit Website</a>
+                    <a href="https://whathaveunionsdoneforus.uk/" style="color: #ef4444; text-decoration: none;">Visit Website</a>
                     {' | '}
-                    <a href="mailto:unsubscribe@unionwins.com" style="color: #6b7280; text-decoration: none;">Unsubscribe</a>
+                    <a href="mailto:unsubscribe@whathaveunionsdoneforus.uk" style="color: #6b7280; text-decoration: none;">Unsubscribe</a>
                 </p>
             </div>
         </div>

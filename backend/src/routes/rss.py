@@ -35,17 +35,17 @@ def create_rss_feed(wins: list) -> str:
     title.text = 'What Have Unions Done For Us'
 
     link = SubElement(channel, 'link')
-    link.text = 'https://unionwins.com'
+    link.text = 'https://whathaveunionsdoneforus.uk/'
 
     description = SubElement(channel, 'description')
-    description.text = 'Recent victories and wins by labour unions across various sectors'
+    description.text = 'Recent achievements and wins by labour unions across various sectors'
 
     language = SubElement(channel, 'language')
     language.text = 'en-us'
 
     # Add self-referencing atom:link
     atom_link = SubElement(channel, 'atom:link')
-    atom_link.set('href', 'https://unionwins.com/rss')
+    atom_link.set('href', 'https://whathaveunionsdoneforus.uk/rss')
     atom_link.set('rel', 'self')
     atom_link.set('type', 'application/rss+xml')
 
