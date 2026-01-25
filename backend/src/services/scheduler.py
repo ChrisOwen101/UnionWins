@@ -3,10 +3,12 @@ Scheduler service for automated tasks.
 """
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
 from src.database import get_db
 from src.models import SearchRequestDB
 from src.services.search_service import calculate_date_range, create_search_request
+from src.services.email_service import send_daily_newsletters, send_weekly_newsletters, send_monthly_newsletters
 
 
 def scheduled_search_job() -> None:
@@ -29,6 +31,54 @@ def scheduled_search_job() -> None:
 
     except Exception as e:
         print(f"❌ Error in scheduled search job: {e}", flush=True)
+        if db:
+            db.rollback()
+    finally:
+        if db:
+            db.close()
+
+
+def daily_newsletter_job() -> None:
+    """Send daily newsletters at 9:00 AM."""
+    db = None
+    try:
+        db = next(get_db())
+        count = send_daily_newsletters(db)
+        print(f"📧 Daily newsletters sent: {count} emails", flush=True)
+    except Exception as e:
+        print(f"❌ Error in daily newsletter job: {e}", flush=True)
+        if db:
+            db.rollback()
+    finally:
+        if db:
+            db.close()
+
+
+def weekly_newsletter_job() -> None:
+    """Send weekly newsletters on Monday at 9:00 AM."""
+    db = None
+    try:
+        db = next(get_db())
+        count = send_weekly_newsletters(db)
+        print(f"📧 Weekly newsletters sent: {count} emails", flush=True)
+    except Exception as e:
+        print(f"❌ Error in weekly newsletter job: {e}", flush=True)
+        if db:
+            db.rollback()
+    finally:
+        if db:
+            db.close()
+
+
+def monthly_newsletter_job() -> None:
+    """Send monthly newsletters on the 1st of each month at 9:00 AM."""
+    db = None
+    try:
+        db = next(get_db())
+        count = send_monthly_newsletters(db)
+        print(f"📧 Monthly newsletters sent: {count} emails", flush=True)
+    except Exception as e:
+        print(f"❌ Error in monthly newsletter job: {e}", flush=True)
         if db:
             db.rollback()
     finally:
@@ -93,10 +143,39 @@ def start_scheduler() -> None:
             next_run_time=next_run
         )
 
+        # Add newsletter jobs
+        # Daily newsletters at 9:00 AM every day
+        scheduler.add_job(
+            daily_newsletter_job,
+            trigger=CronTrigger(hour=9, minute=0),
+            id='daily_newsletter',
+            name='Daily newsletter at 9:00 AM',
+            replace_existing=True
+        )
+
+        # Weekly newsletters on Monday at 9:00 AM
+        scheduler.add_job(
+            weekly_newsletter_job,
+            trigger=CronTrigger(day_of_week='mon', hour=9, minute=0),
+            id='weekly_newsletter',
+            name='Weekly newsletter on Monday at 9:00 AM',
+            replace_existing=True
+        )
+
+        # Monthly newsletters on the 1st at 9:00 AM
+        scheduler.add_job(
+            monthly_newsletter_job,
+            trigger=CronTrigger(day=1, hour=9, minute=0),
+            id='monthly_newsletter',
+            name='Monthly newsletter on 1st at 9:00 AM',
+            replace_existing=True
+        )
+
         scheduler.start()
         print("✅ Scheduler started - will run search every 12 hours", flush=True)
         print(
             f"📅 Next scheduled search: {scheduler.get_job('twelve_hour_search').next_run_time.strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
+        print("✅ Newsletter jobs scheduled (daily 9AM, weekly Mon 9AM, monthly 1st 9AM)", flush=True)
 
 
 def stop_scheduler() -> None:

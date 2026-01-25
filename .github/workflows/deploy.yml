@@ -69,6 +69,7 @@ jobs:
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p $DEPLOY_PORT $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
@@ -76,6 +77,7 @@ jobs:
           # Create .env file locally with actual values
           echo "DATABASE_URL=$DATABASE_URL" > /tmp/deploy.env
           echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> /tmp/deploy.env
+          echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> /tmp/deploy.env
 
           # Copy .env file to server
           sshpass -p "$DEPLOY_PASSWORD" scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT /tmp/deploy.env $DEPLOY_USER@$DEPLOY_HOST:~/unionwins/.env

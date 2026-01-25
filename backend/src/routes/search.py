@@ -8,15 +8,21 @@ from src.database import get_db
 from src.schemas import SearchRequest, SearchResponse, SearchRequestStatus
 from src.services.search_service import calculate_date_range, create_search_request
 from src.models import SearchRequestDB
+from src.auth import verify_admin_password
 
 router = APIRouter(prefix="/api/wins", tags=["search"])
 
 
 @router.post("/search")
-async def search_wins(request: SearchRequest, db: Session = Depends(get_db)) -> SearchResponse:
+async def search_wins(
+    request: SearchRequest,
+    _: bool = Depends(verify_admin_password),
+    db: Session = Depends(get_db)
+) -> SearchResponse:
     """
     Queue a search for new trade What Have Unions Done For Us.
     The actual processing happens in the background polling thread.
+    Requires admin password.
 
     Args:
         request: SearchRequest containing optional date parameter (YYYY-MM-DD format)

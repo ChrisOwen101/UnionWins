@@ -65,7 +65,7 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
 
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={handleClose}
         >
             <div
@@ -97,13 +97,16 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
                     <>
                         <p className="text-gray-600 mb-4">
                             Share a news article or blog post about a recent union victory.
-                            Our AI will extract the details and an admin will review before publishing.
+                        </p>
+
+                        <p className="text-gray-600 mb-4">
+                            We'll extract the details and an admin will review before publishing.
                         </p>
 
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Article URL *
+                                    URL
                                 </label>
                                 <input
                                     type="text"
@@ -119,7 +122,7 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
 
                             <div className="mb-6">
                                 <label htmlFor="submittedBy" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Your Name or Email (optional)
+                                    Email (optional)
                                 </label>
                                 <input
                                     type="text"
@@ -149,7 +152,7 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting ? 'Submitting...' : 'Submit'}

@@ -34,3 +34,16 @@ export interface GroupedWins {
     monthKey: string
     wins: UnionWin[]
 }
+
+export type NewsletterFrequency = 'daily' | 'weekly' | 'monthly'
+
+export interface NewsletterSubscribeRequest {
+    email: string
+    name?: string
+    frequency: NewsletterFrequency
+}
+
+export interface NewsletterSubscribeResponse {
+    success: boolean
+    message: string
+}

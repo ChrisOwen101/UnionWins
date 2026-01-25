@@ -88,3 +88,16 @@ class SearchRequestStatus(BaseModel):
     error_message: str | None
     created_at: str
     updated_at: str
+
+
+class NewsletterSubscribeRequest(BaseModel):
+    """Schema for newsletter subscription request."""
+    email: str
+    name: str | None = None
+    frequency: str = "weekly"  # 'daily', 'weekly', 'monthly'
+
+
+class NewsletterSubscribeResponse(BaseModel):
+    """Schema for newsletter subscription response."""
+    success: bool
+    message: str

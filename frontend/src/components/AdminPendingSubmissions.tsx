@@ -1,15 +1,23 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { PendingWin } from '../types'
 
-export function AdminPendingSubmissions() {
+interface AdminPendingSubmissionsProps {
+    adminPassword: string
+}
+
+export function AdminPendingSubmissions({ adminPassword }: AdminPendingSubmissionsProps) {
     const [pendingWins, setPendingWins] = useState<PendingWin[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [processingId, setProcessingId] = useState<number | null>(null)
 
-    const fetchPendingSubmissions = async () => {
+    const fetchPendingSubmissions = useCallback(async () => {
         try {
-            const response = await fetch('/api/submissions/pending')
+            const response = await fetch('/api/submissions/pending', {
+                headers: {
+                    'X-Admin-Password': adminPassword,
+                },
+            })
             if (!response.ok) throw new Error('Failed to fetch pending submissions')
             const data = await response.json()
             setPendingWins(data)
@@ -18,11 +26,11 @@ export function AdminPendingSubmissions() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [adminPassword])
 
     useEffect(() => {
         fetchPendingSubmissions()
-    }, [])
+    }, [fetchPendingSubmissions])
 
     const handleReview = async (id: number, action: 'approve' | 'reject') => {
         setProcessingId(id)
@@ -33,6 +41,7 @@ export function AdminPendingSubmissions() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Admin-Password': adminPassword,
                 },
                 body: JSON.stringify({ action }),
             })

@@ -68,4 +68,20 @@ def init_db():
                     f"Note: Could not add unique constraint (may already exist): {e}"
                 )
 
+    # Check newsletter_subscriptions table for new columns
+    if inspector.has_table('newsletter_subscriptions'):
+        newsletter_columns = [
+            col['name'] for col in inspector.get_columns('newsletter_subscriptions')
+        ]
+        with engine.connect() as conn:
+            if 'last_email_sent_at' not in newsletter_columns:
+                print(
+                    "Adding last_email_sent_at column to newsletter_subscriptions table...")
+                conn.execute(
+                    text(
+                        "ALTER TABLE newsletter_subscriptions ADD COLUMN last_email_sent_at TIMESTAMP")
+                )
+                conn.commit()
+                print("last_email_sent_at column added successfully!")
+
     Base.metadata.create_all(bind=engine)

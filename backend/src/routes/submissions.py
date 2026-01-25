@@ -11,6 +11,7 @@ from src.services.submission_service import (
     approve_submission,
     reject_submission
 )
+from src.auth import verify_admin_password
 
 router = APIRouter(prefix="/api/submissions", tags=["submissions"])
 
@@ -39,8 +40,11 @@ async def submit_win(
 
 
 @router.get("/pending")
-async def get_pending(db: Session = Depends(get_db)) -> list[PendingWin]:
-    """Get all pending submissions for admin review."""
+async def get_pending(
+    _: bool = Depends(verify_admin_password),
+    db: Session = Depends(get_db)
+) -> list[PendingWin]:
+    """Get all pending submissions for admin review. Requires admin password."""
     submissions = get_pending_submissions(db)
     return [
         PendingWin(
@@ -62,9 +66,10 @@ async def get_pending(db: Session = Depends(get_db)) -> list[PendingWin]:
 async def review_submission(
     submission_id: int,
     request: ReviewWinRequest,
+    _: bool = Depends(verify_admin_password),
     db: Session = Depends(get_db)
 ) -> dict:
-    """Approve or reject a pending submission."""
+    """Approve or reject a pending submission. Requires admin password."""""
     try:
         if request.action == "approve":
             submission = approve_submission(db, submission_id)

@@ -205,3 +205,23 @@ def search_wins(db: Session, query: str) -> list[UnionWin]:
     )
     wins = [convert_db_win_to_schema(win) for win in wins_db]
     return sort_wins_by_date(wins, reverse=True)
+
+
+def delete_win(db: Session, win_id: int) -> bool:
+    """
+    Delete a win by ID.
+
+    Args:
+        db: Database session
+        win_id: ID of the win to delete
+
+    Returns:
+        True if deleted successfully, False if not found
+    """
+    win_db = get_win_by_id(db, win_id)
+    if not win_db:
+        return False
+
+    db.delete(win_db)
+    db.commit()
+    return True

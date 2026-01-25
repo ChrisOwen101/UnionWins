@@ -1,9 +1,13 @@
 import { useState } from 'react'
 
+interface AdminSearchPanelProps {
+    adminPassword: string
+}
+
 /**
  * Admin panel for searching new What Have Unions Done For Us
  */
-export const AdminSearchPanel: React.FC = () => {
+export const AdminSearchPanel: React.FC<AdminSearchPanelProps> = ({ adminPassword }) => {
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState('')
     const [days, setDays] = useState(7)
@@ -24,6 +28,7 @@ export const AdminSearchPanel: React.FC = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Admin-Password': adminPassword,
                 },
                 body: JSON.stringify(requestBody),
             })

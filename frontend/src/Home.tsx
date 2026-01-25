@@ -4,7 +4,7 @@ import { Header } from './components/Header'
 import { SearchInput } from './components/SearchInput'
 import { LoadingState } from './components/LoadingState'
 import { WinsList } from './components/WinsList'
-import { SubmitWinModal } from './components'
+import { SubmitWinModal, NewsletterNotification } from './components'
 
 function Home() {
     const {
@@ -72,6 +72,8 @@ function Home() {
                 onClose={() => setIsSubmitModalOpen(false)}
                 onSubmit={handleSubmitWin}
             />
+
+            <NewsletterNotification delayMs={10000} />
         </div>
     )
 }

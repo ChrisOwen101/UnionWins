@@ -40,3 +40,34 @@ class SearchRequestDB(Base):
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class ApiKeyDB(Base):
+    """Model for storing API keys."""
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    key_hash = Column(String, nullable=False, unique=True, index=True)
+    # Using Integer for SQLite compatibility
+    is_active = Column(Integer, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    last_used_at = Column(DateTime, nullable=True)
+
+
+class NewsletterSubscriptionDB(Base):
+    """Model for newsletter subscriptions."""
+    __tablename__ = "newsletter_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, nullable=False, unique=True, index=True)
+    name = Column(String, nullable=True)
+    # Frequency: 'daily', 'weekly', 'monthly'
+    frequency = Column(String, nullable=False, default="weekly")
+    # Using Integer for SQLite compatibility (0 = False, 1 = True)
+    is_active = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    last_email_sent_at = Column(DateTime, nullable=True)

@@ -29,3 +29,10 @@ POLLING_INTERVAL_SECONDS = int(os.getenv("POLLING_INTERVAL_SECONDS", "5"))
 
 # Server configuration
 PORT = int(os.getenv("PORT", "3001"))
+
+# Admin configuration
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme123")
+
+# Resend API configuration
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "Union Wins <updates@unionwins.com>")
