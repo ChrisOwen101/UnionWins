@@ -8,7 +8,7 @@ interface NewsletterNotificationProps {
 }
 
 const STORAGE_KEY = 'newsletter_dismissed'
-const DISMISS_DURATION_DAYS = 7
+const DISMISS_DURATION_DAYS = 10
 
 export function NewsletterNotification({ delayMs = 5000 }: NewsletterNotificationProps) {
     const [isVisible, setIsVisible] = useState(false)
