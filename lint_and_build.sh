@@ -52,8 +52,17 @@ echo ""
 # BACKEND LINTING & BUILD
 # =============================================================================
 
-echo -e "${BLUE}📋 Step 4: Backend - Python Syntax Check${NC}"
-if cd backend && python3 -m py_compile src/**/*.py src/*.py 2>/dev/null; then
+echo -e "${BLUE}📋 Step 4: Backend - Ruff Linting${NC}"
+if cd backend && uv run ruff check src/; then
+  echo -e "${GREEN}✓ Backend ruff linting passed${NC}"
+else
+  echo -e "${RED}✗ Backend ruff linting failed${NC}"
+  ERRORS=$((ERRORS + 1))
+fi
+echo ""
+
+echo -e "${BLUE}📋 Step 5: Backend - Python Syntax Check${NC}"
+if python3 -m py_compile src/**/*.py src/*.py 2>/dev/null; then
   echo -e "${GREEN}✓ Backend Python syntax check passed${NC}"
 else
   # Try alternative approach for syntax checking
@@ -72,7 +81,7 @@ else
 fi
 echo ""
 
-echo -e "${BLUE}📋 Step 5: Backend - Import Validation${NC}"
+echo -e "${BLUE}📋 Step 6: Backend - Import Validation${NC}"
 # Check if virtual environment exists
 if [ ! -d ".venv" ]; then
   echo -e "${YELLOW}⚠ Virtual environment not found. Run 'cd backend && uv sync' first${NC}"

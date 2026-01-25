@@ -142,7 +142,7 @@ def send_newsletter_email(
             "html": html_content,
         }
 
-        email = resend.Emails.send(params)
+        resend.Emails.send(params)
 
         # Update last_email_sent_at
         subscriber.last_email_sent_at = datetime.now()

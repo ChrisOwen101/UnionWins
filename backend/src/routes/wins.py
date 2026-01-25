@@ -13,7 +13,6 @@ from src.services.win_service import (
     delete_win,
 )
 from src.auth import verify_api_key, verify_admin_password
-from src.models import ApiKeyDB
 
 router = APIRouter(prefix="/api/wins", tags=["wins"])
 

@@ -64,7 +64,7 @@ def verify_api_key(
 
     api_key_record = (
         db.query(ApiKeyDB)
-        .filter(ApiKeyDB.key_hash == key_hash, ApiKeyDB.is_active == True)
+        .filter(ApiKeyDB.key_hash == key_hash, ApiKeyDB.is_active)
         .first()
     )
 

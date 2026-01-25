@@ -1,7 +1,6 @@
 """
 Admin API routes for API key management.
 """
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
