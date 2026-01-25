@@ -67,7 +67,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
     }
 
     return (
-        <div className="mb-4">
+        <div>
             {/* Filter Panel */}
             <div
                 id="filter-panel"
@@ -91,8 +91,8 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
                                         type="button"
                                         onClick={() => handleTypeToggle(type)}
                                         className={`inline-flex items-center px-3 py-1.5 text-sm rounded-full border transition-all duration-150 ${isSelected
-                                                ? 'bg-orange-50 border-orange-300 text-orange-700 shadow-sm'
-                                                : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-orange-50 border-orange-300 text-orange-700 shadow-sm'
+                                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                                             }`}
                                         aria-pressed={isSelected}
                                     >
