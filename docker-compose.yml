@@ -11,6 +11,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL_SECONDS:-5}
+      - RESEND_API_KEY=${RESEND_API_KEY}
     volumes:
       - unionwins-data:/app/data
     networks:
