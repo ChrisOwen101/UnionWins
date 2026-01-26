@@ -21,14 +21,6 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onSubmitClick }
                     )}
                 </div>
                 <nav aria-label="Primary navigation" className="flex items-center gap-4">
-                    <Link
-                        to="/stats"
-                        className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        title="View statistics and charts"
-                        aria-label="View statistics page"
-                    >
-                        Stats
-                    </Link>
                     {onSubmitClick && (
                         <button
                             onClick={onSubmitClick}
