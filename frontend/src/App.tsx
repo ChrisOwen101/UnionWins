@@ -3,6 +3,8 @@ import Home from './Home'
 import Admin from './Admin'
 import ApiSignup from './ApiSignup'
 import Stats from './Stats'
+import TermsOfService from './TermsOfService'
+import PrivacyPolicy from './PrivacyPolicy'
 
 function App() {
     const skipToMainContent = () => {
@@ -29,6 +31,8 @@ function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/api-signup" element={<ApiSignup />} />
                 <Route path="/stats" element={<Stats />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
             </Routes>
         </Router>
     )

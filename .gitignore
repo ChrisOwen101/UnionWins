@@ -103,6 +103,9 @@ docker-compose.override.yml
 *.sqlite
 *.sqlite3
 
+# Generated videos
+videos/
+
 # IDEs
 *.iml
 .vscode/

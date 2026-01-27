@@ -1,4 +1,4 @@
-import { Header } from './components'
+import { Header, Footer } from './components'
 
 function ApiSignup() {
     const developerEmail = 'chris@whathaveunionsdoneforus.uk'
@@ -93,6 +93,7 @@ function ApiSignup() {
                     </div>
                 </div>
             </main>
+            <Footer />
         </div>
     )
 }

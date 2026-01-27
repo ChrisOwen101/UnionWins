@@ -6,8 +6,10 @@ import { AdminPendingSubmissions } from './components/AdminPendingSubmissions'
 import { AdminRecentWins } from './components/AdminRecentWins'
 import { AdminApiKeys } from './components/AdminApiKeys'
 import { AdminNewsletterSubscribers } from './components/AdminNewsletterSubscribers'
+import { AdminTikTok } from './components/AdminTikTok'
+import { Footer } from './components/Footer'
 
-type TabId = 'pending' | 'recent' | 'search' | 'status' | 'api-keys' | 'newsletter'
+type TabId = 'pending' | 'recent' | 'search' | 'status' | 'api-keys' | 'newsletter' | 'tiktok'
 
 interface Tab {
     id: TabId
@@ -21,6 +23,7 @@ const tabs: Tab[] = [
     { id: 'status', label: 'Search Status' },
     { id: 'api-keys', label: 'API Keys' },
     { id: 'newsletter', label: 'Newsletter' },
+    { id: 'tiktok', label: 'TikTok' },
 ]
 
 function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
@@ -193,8 +196,14 @@ function AdminDashboard({ adminPassword }: { adminPassword: string }) {
                             <AdminNewsletterSubscribers adminPassword={adminPassword} />
                         </div>
                     )}
+                    {activeTab === 'tiktok' && (
+                        <div role="tabpanel" id="panel-tiktok" aria-labelledby="tab-tiktok">
+                            <AdminTikTok adminPassword={adminPassword} />
+                        </div>
+                    )}
                 </div>
             </main>
+            <Footer />
         </div>
     )
 }

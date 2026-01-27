@@ -13,6 +13,7 @@ import {
     Line,
     Legend,
 } from 'recharts'
+import { Footer } from './components/Footer'
 import type { UnionWin } from './types'
 
 // Color palette for charts
@@ -463,6 +464,7 @@ function Stats() {
                     <WinTypesByYearChart wins={wins} />
                 </ChartCard>
             </main>
+            <Footer />
         </div>
     )
 }
