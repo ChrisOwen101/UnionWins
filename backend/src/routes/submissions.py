@@ -1,6 +1,7 @@
 """
 API routes for user submissions of What Have Unions Done For Us.
 """
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.database import get_db
@@ -14,6 +15,17 @@ from src.services.submission_service import (
 from src.auth import verify_admin_password
 
 router = APIRouter(prefix="/api/submissions", tags=["submissions"])
+
+
+def parse_image_urls(image_urls_json: str | None) -> list[str] | None:
+    """Parse image_urls JSON string into a list."""
+    if not image_urls_json:
+        return None
+    try:
+        urls = json.loads(image_urls_json)
+        return urls if urls else None
+    except (json.JSONDecodeError, TypeError):
+        return None
 
 
 @router.post("")
@@ -56,6 +68,7 @@ async def get_pending(
             date=s.date,
             url=s.url,
             summary=s.summary,
+            image_urls=parse_image_urls(s.image_urls),
             status=s.status,
             submitted_by=s.submitted_by
         )

@@ -19,11 +19,17 @@ def scrape_url_with_openai(url: str) -> dict:
     """
     Use OpenAI GPT-5.2 with web search to scrape a URL and extract union win information.
 
+    Extracts structured data including a list of relevant image URLs from the article.
+    The image extraction prioritizes:
+    1. Open Graph (og:image) meta tag - typically the article's main image
+    2. Twitter card image (twitter:image) meta tag
+    3. Content images showing workers, unions, or related to the story
+
     Args:
         url: The URL to scrape
 
     Returns:
-        dict with keys: title, union_name, date, summary, image (or None on failure)
+        dict with keys: title, union_name, date, summary, image_urls (or None on failure)
     """
     try:
         print(f"🔍 Scraping URL with OpenAI: {url}", flush=True)
@@ -46,6 +52,18 @@ Extract the following information and return ONLY a valid JSON object with no ot
 - date: string (YYYY-MM-DD format)
 - url: string (credible source URL)
 - summary: string (3-5 sentence summary)
+- image_urls: array of strings (list of relevant image URLs from the article, up to 5 images)
+
+For image_urls extraction, follow these rules:
+1. Include the og:image (Open Graph) meta tag if present - this is typically the article's featured image
+2. Include the twitter:image meta tag if present and different from og:image
+3. Include content images that show workers, union members, protests, workplace scenes, or are directly related to the story
+4. Order images by relevance - most relevant first
+5. Return up to 5 images maximum
+6. AVOID: Generic stock photos, logos, advertisements, icons, social media buttons, or unrelated decorative images
+7. AVOID: Images smaller than 200x200 pixels (thumbnails, icons)
+8. All image URLs must be absolute URLs (starting with http:// or https://)
+9. If no suitable images are found, return an empty array []
 
 Return ONLY the JSON object with these exact keys, no markdown formatting, no explanation."""
         )
@@ -68,6 +86,17 @@ Return ONLY the JSON object with these exact keys, no markdown formatting, no ex
         if result.get("secondary_type"):
             types.append(result["secondary_type"])
         result["win_types"] = ", ".join(types) if types else None
+
+        # Ensure image_urls is a list
+        if not isinstance(result.get("image_urls"), list):
+            result["image_urls"] = []
+
+        # Log image extraction result
+        image_count = len(result.get("image_urls", []))
+        if image_count > 0:
+            print(f"🖼️  Extracted {image_count} image(s) from article", flush=True)
+        else:
+            print("⚠️  No suitable images found in article", flush=True)
 
         return result
 
@@ -105,6 +134,9 @@ def create_submission(db: Session, url: str, submitted_by: str | None = None) ->
         raise ValueError("Failed to extract information from URL")
 
     # Create pending submission
+    # Convert image_urls list to JSON string for storage
+    image_urls_json = json.dumps(scraped_data.get("image_urls", [])) if scraped_data.get("image_urls") else None
+    
     submission = UnionWinDB(
         title=scraped_data["title"],
         union_name=scraped_data.get("union_name"),
@@ -113,6 +145,7 @@ def create_submission(db: Session, url: str, submitted_by: str | None = None) ->
         date=scraped_data["date"],
         url=url,
         summary=scraped_data["summary"],
+        image_urls=image_urls_json,
         status="pending",
         submitted_by=submitted_by
     )

@@ -14,6 +14,7 @@ class UnionWin(BaseModel):
     date: str
     url: str
     summary: str
+    image_urls: list[str] | None  # List of relevant image URLs from the article
 
 
 class PendingWin(BaseModel):
@@ -26,6 +27,7 @@ class PendingWin(BaseModel):
     date: str
     url: str
     summary: str
+    image_urls: list[str] | None  # List of relevant image URLs from the article
     status: str
     submitted_by: str | None
 
@@ -50,6 +52,7 @@ class UpdateWinRequest(BaseModel):
     date: str | None = None
     url: str | None = None
     summary: str | None = None
+    image_urls: list[str] | None = None  # List of relevant image URLs
 
 
 class PaginatedWinsResponse(BaseModel):

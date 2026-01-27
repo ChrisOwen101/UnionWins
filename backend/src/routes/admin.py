@@ -2,17 +2,14 @@
 Admin API routes for API key management.
 """
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-import os
-import tempfile
 
 from src.database import get_db
 from src.models import ApiKeyDB, NewsletterSubscriptionDB
 from src.auth import verify_admin_password, generate_api_key, hash_api_key
 from src.services.email_service import preview_newsletter_email
-from src.services.tiktok_service import create_tiktok_video
 
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -239,69 +236,3 @@ async def preview_newsletter(
         db
     )
     return html
-
-
-@router.post("/tiktok/create")
-async def create_tiktok(
-    _: bool = Depends(verify_admin_password),
-    db: Session = Depends(get_db)
-) -> dict:
-    """
-    Create a TikTok video for the most recent win and return download info.
-    
-    Returns details about the created video including the download path.
-    """
-    # Create a temp directory that will persist for the download
-    temp_dir = tempfile.mkdtemp()
-    
-    result = create_tiktok_video(db, output_dir=temp_dir)
-    
-    if not result["success"]:
-        # Clean up temp dir if creation failed
-        if os.path.exists(temp_dir):
-            import shutil
-            shutil.rmtree(temp_dir)
-        raise HTTPException(status_code=500, detail=result["message"])
-    
-    # Store the video path for download
-    video_path = result.get("video_path")
-    if not video_path or not os.path.exists(video_path):
-        raise HTTPException(status_code=500, detail="Video file not found")
-    
-    return {
-        "success": True,
-        "win_id": result["win_id"],
-        "win_title": result["win_title"],
-        "script": result["script"],
-        "caption": result["caption"],
-        "video_filename": os.path.basename(video_path),
-        "temp_path": video_path,
-        "message": "TikTok video created successfully. Ready for download.",
-    }
-
-
-@router.get("/tiktok/download")
-async def download_tiktok(
-    video_path: str,
-    _: bool = Depends(verify_admin_password),
-) -> FileResponse:
-    """
-    Download the created TikTok video.
-    
-    Args:
-        video_path: Path to the video file (from create endpoint)
-    """
-    if not os.path.exists(video_path):
-        raise HTTPException(status_code=404, detail="Video file not found")
-    
-    filename = os.path.basename(video_path)
-    
-    # Return the file and schedule cleanup
-    return FileResponse(
-        path=video_path,
-        filename=filename,
-        media_type="video/mp4",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"'
-        }
-    )

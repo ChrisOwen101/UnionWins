@@ -1,13 +1,21 @@
+#!/usr/bin/env python3
 """
-TikTok service for creating union win videos.
+TikTok video creator for union win videos.
 
-This service handles:
+This standalone script handles:
 - Generating scripts using OpenAI
 - Converting text to speech using OpenAI TTS
 - Generating images using DALL-E
 - Creating animated videos with Ken Burns effects
+
+Usage:
+    python scripts/tiktok/create_video.py [--win-id ID]
+    
+If no win ID is specified, creates a video for the most recent win.
 """
+import argparse
 import os
+import sys
 import tempfile
 import requests
 from datetime import datetime
@@ -15,10 +23,15 @@ from pathlib import Path
 from typing import Optional
 import numpy as np
 
-from sqlalchemy.orm import Session
+# Add backend to path for imports
+backend_path = Path(__file__).parent.parent.parent / "backend"
+sys.path.insert(0, str(backend_path))
 
-from src.config import client as openai_client
-from src.services.win_service import get_all_wins_sorted
+from sqlalchemy.orm import Session
+from openai import OpenAI
+
+from src.database import SessionLocal
+from src.models import UnionWinDB
 
 from moviepy import (
     ColorClip,
@@ -30,6 +43,8 @@ from moviepy import (
     concatenate_videoclips,
 )
 
+# Initialize OpenAI client
+openai_client = OpenAI()
 
 
 # Video dimensions for TikTok (9:16 vertical format)
@@ -49,6 +64,36 @@ BODY_SIZE = 42
 SMALL_SIZE = 36
 
 
+def get_win_by_id(db: Session, win_id: int) -> Optional[dict]:
+    """
+    Get a specific union win by ID.
+
+    Args:
+        db: Database session
+        win_id: ID of the win to retrieve
+
+    Returns:
+        Dictionary with win details or None if not found
+    """
+    win = db.query(UnionWinDB).filter(
+        UnionWinDB.id == win_id,
+        UnionWinDB.status == "approved"
+    ).first()
+    
+    if not win:
+        return None
+
+    return {
+        "id": win.id,
+        "title": win.title,
+        "union_name": win.union_name,
+        "emoji": win.emoji or "✊",
+        "summary": win.summary,
+        "date": win.date,
+        "url": win.url,
+    }
+
+
 def get_most_recent_win(db: Session) -> Optional[dict]:
     """
     Get the most recent approved union win from the database.
@@ -59,11 +104,13 @@ def get_most_recent_win(db: Session) -> Optional[dict]:
     Returns:
         Dictionary with win details or None if no wins found
     """
-    wins = get_all_wins_sorted(db)
-    if not wins:
+    win = db.query(UnionWinDB).filter(
+        UnionWinDB.status == "approved"
+    ).order_by(UnionWinDB.date.desc()).first()
+    
+    if not win:
         return None
 
-    win = wins[0]
     return {
         "id": win.id,
         "title": win.title,
@@ -505,12 +552,16 @@ def create_video(
     return output_path
 
 
-def create_tiktok_video(db: Session, output_dir: Optional[str] = None) -> dict:
+def create_tiktok_video(
+    db: Session,
+    win_id: Optional[int] = None,
+    output_dir: Optional[str] = None
+) -> dict:
     """
-    Create a TikTok video for the most recent win and save it to a file.
+    Create a TikTok video for a union win and save it to a file.
 
     This orchestrates the workflow:
-    1. Get the most recent win
+    1. Get the specified win (or most recent if not specified)
     2. Generate a script
     3. Generate AI images for scenes
     4. Convert script to audio
@@ -519,18 +570,27 @@ def create_tiktok_video(db: Session, output_dir: Optional[str] = None) -> dict:
 
     Args:
         db: Database session
+        win_id: Optional ID of the win to create video for. If None, uses most recent.
         output_dir: Optional directory to save the video. If None, uses project /videos.
 
     Returns:
         Dictionary with result status, video path, and details
     """
-    # Get most recent win
-    win = get_most_recent_win(db)
-    if not win:
-        return {
-            "success": False,
-            "message": "No union wins found to create video",
-        }
+    # Get win by ID or most recent
+    if win_id:
+        win = get_win_by_id(db, win_id)
+        if not win:
+            return {
+                "success": False,
+                "message": f"No approved win found with ID {win_id}",
+            }
+    else:
+        win = get_most_recent_win(db)
+        if not win:
+            return {
+                "success": False,
+                "message": "No union wins found to create video",
+            }
 
     print(f"🎯 Creating TikTok for: {win['title']}", flush=True)
 
@@ -605,3 +665,54 @@ def create_tiktok_video(db: Session, output_dir: Optional[str] = None) -> dict:
             "win_id": win["id"] if win else None,
             "message": error_msg,
         }
+
+
+def main():
+    """Main entry point for the TikTok video creation script."""
+    parser = argparse.ArgumentParser(
+        description="Create a TikTok video for a union win"
+    )
+    parser.add_argument(
+        "--win-id",
+        type=int,
+        default=None,
+        help="ID of the win to create video for (default: most recent)"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Directory to save the video (default: project/videos)"
+    )
+    args = parser.parse_args()
+
+    print("🎬 TikTok Video Creator for Union Wins")
+    print("=" * 50)
+
+    # Create database session
+    db = SessionLocal()
+    
+    try:
+        result = create_tiktok_video(
+            db=db,
+            win_id=args.win_id,
+            output_dir=args.output_dir
+        )
+        
+        if result["success"]:
+            print("\n" + "=" * 50)
+            print("✅ Video created successfully!")
+            print(f"📁 Video path: {result['video_path']}")
+            print(f"🎯 Win: {result['win_title']}")
+            print(f"\n📝 Script:\n{result['script']}")
+            print(f"\n📱 Caption:\n{result['caption']}")
+        else:
+            print(f"\n❌ Failed: {result['message']}")
+            sys.exit(1)
+            
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()

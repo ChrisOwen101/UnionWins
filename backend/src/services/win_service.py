@@ -1,6 +1,7 @@
 """
 Service for managing What Have Unions Done For Us.
 """
+import json
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -21,6 +22,25 @@ def get_all_wins(db: Session) -> list[UnionWinDB]:
     return db.query(UnionWinDB).filter(UnionWinDB.status == "approved").all()
 
 
+def parse_image_urls(image_urls_json: str | None) -> list[str] | None:
+    """
+    Parse the image_urls JSON string from database into a list.
+
+    Args:
+        image_urls_json: JSON string of image URLs or None
+
+    Returns:
+        List of image URL strings, or None if empty/invalid
+    """
+    if not image_urls_json:
+        return None
+    try:
+        urls = json.loads(image_urls_json)
+        return urls if urls else None
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+
 def convert_db_win_to_schema(win_db: UnionWinDB) -> UnionWin:
     """
     Convert database model to Pydantic schema.
@@ -39,7 +59,8 @@ def convert_db_win_to_schema(win_db: UnionWinDB) -> UnionWin:
         win_types=win_db.win_types,
         date=win_db.date,
         url=win_db.url,
-        summary=win_db.summary
+        summary=win_db.summary,
+        image_urls=parse_image_urls(win_db.image_urls)
     )
 
 
@@ -121,6 +142,9 @@ def update_win(db: Session, win_id: int, update_data: UpdateWinRequest) -> Union
         win_db.url = update_data.url
     if update_data.summary is not None:
         win_db.summary = update_data.summary
+    if update_data.image_urls is not None:
+        # Convert list to JSON string for storage
+        win_db.image_urls = json.dumps(update_data.image_urls) if update_data.image_urls else None
 
     db.commit()
     db.refresh(win_db)

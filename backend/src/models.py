@@ -101,6 +101,8 @@ class UnionWinDB(Base):
     date = Column(String, nullable=False)
     url = Column(String, nullable=False, unique=True, index=True)
     summary = Column(Text, nullable=False)
+    # JSON array of relevant image URLs from the article (og:image, content images)
+    image_urls = Column(Text, nullable=True)
     # Status: 'approved' (default for admin-added), 'pending' (user submission), 'rejected'
     status = Column(String, nullable=False, default="approved")
     # Who submitted (optional for user submissions)

@@ -27,6 +27,7 @@ export interface UnionWin {
     date: string
     url: string
     summary: string
+    image_urls?: string[] // List of relevant image URLs from the article
 }
 
 export interface PendingWin {
@@ -38,6 +39,7 @@ export interface PendingWin {
     date: string
     url: string
     summary: string
+    image_urls?: string[] // List of relevant image URLs from the article
     status: string
     submitted_by?: string
 }

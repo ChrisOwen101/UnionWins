@@ -36,9 +36,10 @@ Do:
 - Choose an appropriate emoji that represents the industry, sector, or type of victory (e.g., 🏥 for healthcare, 🚌 for transport, 📚 for education etc)
 - Categorize each win with up to 2 appropriate types from this list: "Pay Rise", "Recognition", "Strike Action", "Working Conditions", "Job Security", "Benefits", "Health & Safety", "Equality", "Legal Victory", "Organizing", "Other"
 - Prioritize reliable, up-to-date sources: official union websites, reputable news outlets (BBC, The Guardian, Reuters), government announcements
-- For each victory, provide: a clear descriptive title, union name, representative emoji, primary type and optional secondary type, exact date (YYYY-MM-DD format), credible source URL, and a 2-3 sentence summary
+- For each victory, provide: a clear descriptive title, union name, representative emoji, primary type and optional secondary type, exact date (YYYY-MM-DD format), credible source URL, a 2-3 sentence summary, and relevant image URLs if available
 - Include inline citations for each win
 - Only include actual verified wins, not speculation or ongoing negotiations
+- For image URLs, extract multiple relevant images: og:image meta tag, twitter:image, and content images showing workers, union members, or related to the story. Avoid logos, icons, and generic stock photos. Include up to 5 images per win.
 
 CRITICAL: Format your response as a valid JSON array. Each win must be a JSON object with these exact fields:
 - title: string (clear, descriptive title)
@@ -49,6 +50,7 @@ CRITICAL: Format your response as a valid JSON array. Each win must be a JSON ob
 - date: string (YYYY-MM-DD format)
 - url: string (credible source URL)
 - summary: string (3-5 sentence summary)
+- image_urls: array of strings (list of relevant image URLs from the article, up to 5; empty array [] if none found)
 
 Example format:
 [
@@ -60,7 +62,8 @@ Example format:
     "secondary_type": null,
     "date": "2026-01-10",
     "url": "https://example.com/article",
-    "summary": "A brief summary of the victory."
+    "summary": "A brief summary of the victory.",
+    "image_urls": ["https://example.com/images/main.jpg", "https://example.com/images/workers.jpg"]
   }},
   {{...}}
 ]
@@ -170,6 +173,7 @@ The JSON should be an array of objects with these fields:
 - date: string (YYYY-MM-DD format)
 - url: string
 - summary: string
+- image_urls: array of strings (list of image URLs, or empty array [] if none)
 
 Malformed JSON:
 {malformed_json}
@@ -248,6 +252,12 @@ def create_win_from_data(win_data: dict) -> UnionWinDB:
         types.append(win_data['secondary_type'])
     win_types_str = ", ".join(types) if types else None
     
+    # Convert image_urls list to JSON string for storage
+    image_urls = win_data.get('image_urls', [])
+    if not isinstance(image_urls, list):
+        image_urls = []
+    image_urls_json = json.dumps(image_urls) if image_urls else None
+    
     return UnionWinDB(
         title=win_data['title'],
         union_name=win_data.get('union_name'),
@@ -255,7 +265,8 @@ def create_win_from_data(win_data: dict) -> UnionWinDB:
         win_types=win_types_str,
         date=win_data['date'],
         url=win_data['url'],
-        summary=win_data['summary']
+        summary=win_data['summary'],
+        image_urls=image_urls_json
     )
 
 
