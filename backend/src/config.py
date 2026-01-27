@@ -35,7 +35,7 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme123")
 
 # Resend API configuration
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-FROM_EMAIL = os.getenv("FROM_EMAIL", "Union Wins <updates@unionwins.com>")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "What Have Unions Done For Us <updates@whathaveunionsdoneforus.uk>")
 
 # TikTok API configuration
 TIKTOK_ACCESS_TOKEN = os.getenv("TIKTOK_ACCESS_TOKEN")
