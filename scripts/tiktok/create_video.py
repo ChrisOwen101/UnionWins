@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-TikTok video creator for union win videos.
+TikTok video creator for union win videos using OpenAI Sora-2.
 
 This standalone script handles:
-- Generating scripts using OpenAI
-- Converting text to speech using OpenAI TTS
-- Generating images using DALL-E
-- Creating animated videos with Ken Burns effects
+- Generating narration scripts using OpenAI
+- Converting scripts to audio using OpenAI TTS
+- Creating video clips with Sora-2 based on win images
+- Combining clips and audio into final TikTok video
 
 Usage:
     python scripts/tiktok/create_video.py [--win-id ID]
@@ -14,14 +14,21 @@ Usage:
 If no win ID is specified, creates a video for the most recent win.
 """
 import argparse
+import json
 import os
 import sys
 import tempfile
-import requests
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import numpy as np
+
+import requests
+from moviepy.editor import (
+    AudioFileClip,
+    CompositeVideoClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
 
 # Add backend to path for imports
 backend_path = Path(__file__).parent.parent.parent / "backend"
@@ -33,35 +40,12 @@ from openai import OpenAI
 from src.database import SessionLocal
 from src.models import UnionWinDB
 
-from moviepy import (
-    ColorClip,
-    AudioFileClip,
-    CompositeVideoClip,
-    TextClip,
-    ImageClip,
-    VideoClip,
-    concatenate_videoclips,
-)
-
 # Initialize OpenAI client
 openai_client = OpenAI()
 
-
-# Video dimensions for TikTok (9:16 vertical format)
+# Video dimensions for TikTok (9:16 vertical)
 VIDEO_WIDTH = 1080
 VIDEO_HEIGHT = 1920
-
-# Colors
-BACKGROUND_COLOR = (30, 64, 175)  # Tailwind blue-800
-OVERLAY_COLOR = (0, 0, 0)  # Black for overlay
-
-# Text styling
-TEXT_COLOR = "white"
-TEXT_FONT = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
-TITLE_SIZE = 72
-SUBTITLE_SIZE = 48
-BODY_SIZE = 42
-SMALL_SIZE = 36
 
 
 def get_win_by_id(db: Session, win_id: int) -> Optional[dict]:
@@ -83,6 +67,14 @@ def get_win_by_id(db: Session, win_id: int) -> Optional[dict]:
     if not win:
         return None
 
+    # Parse image_urls from JSON
+    image_urls = []
+    if win.image_urls:
+        try:
+            image_urls = json.loads(win.image_urls)
+        except (json.JSONDecodeError, TypeError):
+            image_urls = []
+
     return {
         "id": win.id,
         "title": win.title,
@@ -91,6 +83,7 @@ def get_win_by_id(db: Session, win_id: int) -> Optional[dict]:
         "summary": win.summary,
         "date": win.date,
         "url": win.url,
+        "image_urls": image_urls,
     }
 
 
@@ -111,6 +104,14 @@ def get_most_recent_win(db: Session) -> Optional[dict]:
     if not win:
         return None
 
+    # Parse image_urls from JSON
+    image_urls = []
+    if win.image_urls:
+        try:
+            image_urls = json.loads(win.image_urls)
+        except (json.JSONDecodeError, TypeError):
+            image_urls = []
+
     return {
         "id": win.id,
         "title": win.title,
@@ -119,27 +120,25 @@ def get_most_recent_win(db: Session) -> Optional[dict]:
         "summary": win.summary,
         "date": win.date,
         "url": win.url,
+        "image_urls": image_urls,
     }
 
 
-def generate_tiktok_script(win: dict) -> str:
+def generate_script(win: dict) -> str:
     """
-    Generate a 20-second script explaining the union win.
-
-    Uses OpenAI to create an engaging, easy-to-understand script
-    suitable for TikTok's short-form video format.
+    Generate a 20-second narration script for the union win.
 
     Args:
-        win: Dictionary containing win details (title, union_name, summary)
+        win: Dictionary containing win details
 
     Returns:
         Generated script text (approximately 50-60 words for 20 seconds)
     """
-    prompt = f"""Create a 20-second TikTok script about this union victory. 
-Make it engaging, easy to understand, and memorable. 
+    prompt = f"""Create a 20-second TikTok narration script about this union victory.
+Make it engaging, easy to understand, and memorable.
 Use simple language that anyone can understand.
 The script should be approximately 50-60 words (about 20 seconds when spoken).
-Don't include any stage directions or emojis in the script - just the spoken words.
+Don't include any stage directions or emojis - just the spoken words.
 
 Union Win Details:
 - Title: {win['title']}
@@ -147,18 +146,16 @@ Union Win Details:
 - Summary: {win['summary']}
 - Date: {win['date']}
 
-Start with a hook to grab attention. End with an inspiring message about worker power.
-"""
+Start with a hook to grab attention. End with an inspiring message about worker power."""
 
     response = openai_client.chat.completions.create(
         model="gpt-4o",
         messages=[
             {
                 "role": "system",
-                "content": "You are a social media content creator who makes "
-                           "engaging short-form videos about workers' rights and "
-                           "union victories. Your tone is upbeat, informative, and "
-                           "inspiring.",
+                "content": "You are an expert TikTok script writer who creates "
+                           "engaging, punchy narration scripts about workers' rights "
+                           "and union victories. Keep it conversational and inspiring.",
             },
             {"role": "user", "content": prompt},
         ],
@@ -167,388 +164,247 @@ Start with a hook to grab attention. End with an inspiring message about worker 
     )
 
     script = response.choices[0].message.content.strip()
-    print(f"📝 Generated TikTok script ({len(script.split())} words)", flush=True)
+    print(f"📝 Generated script ({len(script.split())} words)", flush=True)
     return script
 
 
 def convert_script_to_audio(script: str, output_path: str) -> str:
     """
-    Convert the script text to speech using OpenAI TTS.
+    Convert script text to audio using OpenAI TTS.
 
     Args:
-        script: The script text to convert
+        script: The narration script text
         output_path: Path to save the audio file
 
     Returns:
         Path to the generated audio file
     """
+    print("🎙️ Converting script to audio...", flush=True)
+    
     response = openai_client.audio.speech.create(
         model="tts-1-hd",
-        voice="nova",  # Friendly, energetic voice suitable for TikTok
+        voice="onyx",  # Deep, authoritative voice
         input=script,
-        speed=1.1,  # Slightly faster for TikTok pacing
+        speed=1.0,
     )
-
+    
     response.stream_to_file(output_path)
-    print(f"🎤 Generated audio file: {output_path}", flush=True)
+    print(f"✅ Audio saved to: {output_path}", flush=True)
     return output_path
 
 
-def generate_scene_images(win: dict, temp_dir: str) -> list[str]:
+def generate_video_prompt_from_image(image_url: str, win: dict, scene_number: int) -> str:
     """
-    Generate AI images for the video scenes using DALL-E.
-
-    Creates 3 images:
-    1. Hook scene - dramatic workers/union imagery
-    2. Story scene - relevant to the specific win
-    3. Call to action - empowering union imagery
+    Generate a Sora-2 video prompt based on an image from the win.
 
     Args:
-        win: Win details dictionary
-        temp_dir: Directory to save generated images
+        image_url: URL of the source image
+        win: Dictionary containing win details for context
+        scene_number: Which scene this is (1, 2, or 3)
 
     Returns:
-        List of paths to generated images
+        Generated video prompt for Sora-2
     """
-    image_prompts = [
-        # Scene 1: Hook - Attention grabbing
-        (
-            "Dramatic wide shot of diverse workers standing united with raised fists, "
-            "dramatic lighting, cinematic style, powerful solidarity moment, "
-            "professional photography, vibrant colors, 9:16 vertical format"
-        ),
-        
-        # Scene 2: Story - Specific to the win
-        (
-            f"Professional photo depicting {win['union_name'] or 'workers'} celebrating "
-            f"a victory related to {win['title'][:50]}, diverse group of happy workers, "
-            f"warm celebratory atmosphere, documentary style, 9:16 vertical format"
-        ),
-        
-        # Scene 3: Call to action - Empowering
-        (
-            "Inspiring image of workers joining hands in solidarity, diverse group, "
-            "golden hour lighting, hopeful atmosphere, union strength, "
-            "professional documentary photography, 9:16 vertical format"
-        ),
-    ]
+    scene_focuses = {
+        1: "opening hook - dramatic reveal, building anticipation",
+        2: "main story - workers in action, solidarity and strength",
+        3: "celebration - victory moment, triumphant energy",
+    }
     
-    image_paths = []
+    focus = scene_focuses.get(scene_number, "dynamic worker imagery")
     
-    for i, prompt in enumerate(image_prompts):
-        try:
-            print(f"🎨 Generating image {i+1}/3...", flush=True)
-            response = openai_client.images.generate(
-                model="dall-e-3",
-                prompt=prompt,
-                size="1024x1792",  # Vertical format for TikTok
-                quality="standard",
-                n=1,
-            )
-            
-            image_url = response.data[0].url
-            image_path = os.path.join(temp_dir, f"scene_{i+1}.png")
-            
-            # Download the image
-            img_response = requests.get(image_url, timeout=60)
-            img_response.raise_for_status()
-            
-            with open(image_path, "wb") as f:
-                f.write(img_response.content)
-            
-            image_paths.append(image_path)
-            print(f"✅ Generated image {i+1}: {image_path}", flush=True)
-            
-        except Exception as e:
-            print(f"⚠️ Failed to generate image {i+1}: {e}", flush=True)
-            # Use a colored fallback
-            image_paths.append(None)
-    
-    return image_paths
+    prompt = f"""Create a 7-second video prompt inspired by this image and context.
 
+Image URL: {image_url}
 
-def apply_ken_burns_effect(
-    clip: ImageClip,
-    duration: float,
-    effect_type: str = "zoom_in",
-) -> ImageClip:
-    """
-    Apply Ken Burns (pan and zoom) effect to an image clip.
+Union Win Context:
+- Title: {win['title']}
+- Union: {win['union_name'] or 'Workers'}
+- Summary: {win['summary']}
 
-    Args:
-        clip: The image clip to animate
-        duration: Duration of the animation
-        effect_type: Type of effect - 'zoom_in', 'zoom_out', 'pan_left', 'pan_right'
+Scene Focus: {focus}
 
-    Returns:
-        Animated image clip
-    """
-    w, h = clip.size
-    
-    # Calculate the scale to cover the video dimensions
-    scale_w = VIDEO_WIDTH / w
-    scale_h = VIDEO_HEIGHT / h
-    base_scale = max(scale_w, scale_h) * 1.3  # Extra 30% for zoom room
-    
-    if effect_type == "zoom_in":
-        # Start zoomed out, end zoomed in
-        def zoom_func(t):
-            progress = t / duration
-            scale = base_scale * (1 + 0.15 * progress)  # 15% zoom
-            return scale
-        
-        def position_func(t):
-            return ("center", "center")
-            
-    elif effect_type == "zoom_out":
-        # Start zoomed in, end zoomed out
-        def zoom_func(t):
-            progress = t / duration
-            scale = base_scale * (1.15 - 0.15 * progress)
-            return scale
-        
-        def position_func(t):
-            return ("center", "center")
-            
-    elif effect_type == "pan_left":
-        # Pan from right to left
-        def zoom_func(t):
-            return base_scale * 1.1
-        
-        def position_func(t):
-            progress = t / duration
-            x_offset = int(100 * (1 - progress) - 50)
-            return (x_offset, "center")
-            
-    else:  # pan_right
-        # Pan from left to right
-        def zoom_func(t):
-            return base_scale * 1.1
-        
-        def position_func(t):
-            progress = t / duration
-            x_offset = int(100 * progress - 50)
-            return (x_offset, "center")
-    
-    # Apply the resize effect frame by frame
-    def make_frame(t):
-        scale = zoom_func(t)
-        new_w = int(w * scale)
-        new_h = int(h * scale)
-        
-        # Resize the frame
-        frame = clip.get_frame(0)
-        from PIL import Image
-        img = Image.fromarray(frame)
-        img_resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-        
-        # Crop to video dimensions from center
-        left = (new_w - VIDEO_WIDTH) // 2
-        top = (new_h - VIDEO_HEIGHT) // 2
-        img_cropped = img_resized.crop((left, top, left + VIDEO_WIDTH, top + VIDEO_HEIGHT))
-        
-        return np.array(img_cropped)
-    
-    animated_clip = VideoClip(make_frame, duration=duration)
-    
-    return animated_clip
+Requirements:
+1. Capture the essence and visual style of the source image
+2. Add cinematic movement and energy
+3. Keep it vertical format (9:16) for TikTok
+4. Make it visually engaging and professional
+5. Focus on: {focus}
 
+Write a detailed visual description for video generation."""
 
-def create_text_overlay(
-    text: str,
-    position: tuple,
-    font_size: int,
-    duration: float,
-    start_time: float = 0,
-    bg_opacity: float = 0.7,
-) -> CompositeVideoClip:
-    """
-    Create a text overlay with semi-transparent background.
-
-    Args:
-        text: Text to display
-        position: Position tuple (x, y) or ("center", y)
-        font_size: Font size
-        duration: Duration of the clip
-        start_time: When the text appears
-        bg_opacity: Opacity of background (0-1)
-
-    Returns:
-        Composite clip with text and background
-    """
-    # Create text clip
-    txt_clip = TextClip(
-        text=text,
-        font_size=font_size,
-        color=TEXT_COLOR,
-        font=TEXT_FONT,
-        size=(VIDEO_WIDTH - 120, None),
-        method="caption",
-        text_align="center",
+    response = openai_client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert at creating detailed video prompts for "
+                           "AI video generation. Create vivid, cinematic descriptions "
+                           "that capture the spirit of workers' victories.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        max_tokens=250,
+        temperature=0.7,
     )
-    
-    # Get text dimensions
-    txt_w, txt_h = txt_clip.size
-    
-    # Create background box
-    padding = 30
-    bg_clip = ColorClip(
-        size=(txt_w + padding * 2, txt_h + padding * 2),
-        color=OVERLAY_COLOR,
-    ).with_opacity(bg_opacity)
-    
-    # Position background
-    if position[0] == "center":
-        bg_x = (VIDEO_WIDTH - txt_w - padding * 2) // 2
-    else:
-        bg_x = position[0] - padding
-    bg_y = position[1] - padding
-    
-    bg_clip = bg_clip.with_position((bg_x, bg_y)).with_duration(duration)
-    txt_clip = txt_clip.with_position(position).with_duration(duration)
-    
-    return [bg_clip, txt_clip]
+
+    video_prompt = response.choices[0].message.content.strip()
+    return video_prompt
 
 
-def create_video(
-    audio_path: str,
-    script: str,
-    win: dict,
+def generate_generic_video_prompt(win: dict, scene_number: int) -> str:
+    """
+    Generate a Sora-2 video prompt when no image is available.
+
+    Args:
+        win: Dictionary containing win details
+        scene_number: Which scene this is (1, 2, or 3)
+
+    Returns:
+        Generated video prompt for Sora-2
+    """
+    scene_descriptions = {
+        1: "Opening scene: Dramatic wide shot of workers gathering, "
+           "morning light, sense of anticipation and determination",
+        2: "Middle scene: Close-ups of diverse workers united, "
+           "signs of solidarity, powerful imagery of collective action",
+        3: "Closing scene: Celebration moment, workers cheering, "
+           "triumphant atmosphere, victory energy",
+    }
+    
+    base_description = scene_descriptions.get(scene_number, "Workers united")
+    
+    prompt = f"""Create a 7-second cinematic video prompt for this union victory scene.
+
+Union Win: {win['title']}
+Union: {win['union_name'] or 'Workers'}
+Summary: {win['summary']}
+
+Scene: {base_description}
+
+Requirements:
+1. Vertical format (9:16) for TikTok
+2. Cinematic quality with movement
+3. Inspiring and empowering tone
+4. Professional documentary style
+
+Write a detailed visual description."""
+
+    response = openai_client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert cinematographer creating video prompts "
+                           "for inspiring documentaries about workers' rights.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        max_tokens=200,
+        temperature=0.7,
+    )
+
+    return response.choices[0].message.content.strip()
+
+
+def generate_video_clip_with_sora(
+    video_prompt: str,
     output_path: str,
-    image_paths: list[str] = None,
+    duration: int = 7,
 ) -> str:
     """
-    Create an animated video with Ken Burns effects and text overlays.
-
-    The video features:
-    - AI-generated images with Ken Burns animations
-    - Animated text overlays
-    - Professional transitions
-    - Voiceover audio
+    Generate a video clip using OpenAI Sora-2.
 
     Args:
-        audio_path: Path to the audio file
-        script: The script text (for potential subtitles)
-        win: Win details dictionary
-        output_path: Path to save the video file
-        image_paths: List of paths to scene images
+        video_prompt: The detailed description of the video to generate
+        output_path: Path to save the generated video file
+        duration: Duration in seconds (default 7 for ~20s total with 3 clips)
 
     Returns:
         Path to the generated video file
     """
-    # Load audio to get duration
+    print(f"🎬 Generating video clip with Sora-2...", flush=True)
+    
+    response = openai_client.video.generations.create(
+        model="sora-2",
+        prompt=video_prompt,
+        size="1080x1920",  # Vertical 9:16 format for TikTok
+        duration=duration,
+    )
+    
+    video_url = response.data[0].url
+    print(f"✅ Video clip generated, downloading...", flush=True)
+    
+    video_response = requests.get(video_url, timeout=300)
+    video_response.raise_for_status()
+    
+    with open(output_path, "wb") as f:
+        f.write(video_response.content)
+    
+    return output_path
+
+
+def combine_videos_with_audio(
+    video_paths: list[str],
+    audio_path: str,
+    output_path: str,
+) -> str:
+    """
+    Combine multiple video clips with audio into final video.
+
+    Args:
+        video_paths: List of paths to video clips
+        audio_path: Path to the audio file
+        output_path: Path to save the final video
+
+    Returns:
+        Path to the final combined video
+    """
+    print("🎬 Combining video clips with audio...", flush=True)
+    
+    # Load video clips
+    clips = []
+    for path in video_paths:
+        if os.path.exists(path):
+            clip = VideoFileClip(path)
+            clips.append(clip)
+    
+    if not clips:
+        raise ValueError("No valid video clips to combine")
+    
+    # Concatenate video clips
+    final_video = concatenate_videoclips(clips, method="compose")
+    
+    # Load and add audio
     audio = AudioFileClip(audio_path)
-    total_duration = audio.duration
     
-    # Calculate scene durations (3 scenes)
-    scene_duration = total_duration / 3
+    # Adjust video duration to match audio if needed
+    if final_video.duration > audio.duration:
+        final_video = final_video.subclip(0, audio.duration)
+    elif final_video.duration < audio.duration:
+        # Loop or extend last frame if video is shorter
+        audio = audio.subclip(0, final_video.duration)
     
-    scenes = []
-    effects = ["zoom_in", "pan_left", "zoom_out"]
+    final_video = final_video.set_audio(audio)
     
-    for i in range(3):
-        # Create background for this scene
-        if image_paths and image_paths[i] and os.path.exists(image_paths[i]):
-            # Use AI-generated image with Ken Burns effect
-            img_clip = ImageClip(image_paths[i])
-            scene_bg = apply_ken_burns_effect(
-                img_clip,
-                scene_duration,
-                effect_type=effects[i],
-            )
-        else:
-            # Fallback to colored background with gradient effect
-            scene_bg = ColorClip(
-                size=(VIDEO_WIDTH, VIDEO_HEIGHT),
-                color=BACKGROUND_COLOR,
-                duration=scene_duration,
-            )
-        
-        # Add dark overlay for text readability
-        overlay = ColorClip(
-            size=(VIDEO_WIDTH, VIDEO_HEIGHT),
-            color=(0, 0, 0),
-            duration=scene_duration,
-        ).with_opacity(0.4)
-        
-        # Create text for each scene
-        if i == 0:
-            # Scene 1: Hook with emoji and "UNION WIN"
-            text_elements = [
-                *create_text_overlay(
-                    f"{win['emoji']} UNION WIN",
-                    ("center", VIDEO_HEIGHT // 2 - 200),
-                    TITLE_SIZE + 20,
-                    scene_duration,
-                ),
-                *create_text_overlay(
-                    win['union_name'] or "Workers United",
-                    ("center", VIDEO_HEIGHT // 2 + 50),
-                    SUBTITLE_SIZE,
-                    scene_duration,
-                ),
-            ]
-        elif i == 1:
-            # Scene 2: The story/title
-            text_elements = create_text_overlay(
-                win['title'],
-                ("center", VIDEO_HEIGHT // 2 - 100),
-                BODY_SIZE,
-                scene_duration,
-            )
-        else:
-            # Scene 3: Call to action + branding
-            text_elements = [
-                *create_text_overlay(
-                    "Workers win when\nwe stand together!",
-                    ("center", VIDEO_HEIGHT // 2 - 150),
-                    SUBTITLE_SIZE,
-                    scene_duration,
-                ),
-                *create_text_overlay(
-                    "✊ UnionWins.com",
-                    ("center", VIDEO_HEIGHT - 300),
-                    SMALL_SIZE,
-                    scene_duration,
-                ),
-            ]
-        
-        # Ensure text_elements is a list
-        if not isinstance(text_elements, list):
-            text_elements = [text_elements]
-        
-        # Composite scene
-        scene_clips = [scene_bg, overlay] + text_elements
-        scene = CompositeVideoClip(scene_clips, size=(VIDEO_WIDTH, VIDEO_HEIGHT))
-        scene = scene.with_duration(scene_duration)
-        scenes.append(scene)
-    
-    # Concatenate all scenes
-    final_video = concatenate_videoclips(scenes, method="compose")
-    
-    # Add audio
-    final_video = final_video.with_audio(audio)
-    
-    # Write video file
-    print("🎬 Rendering video...", flush=True)
+    # Write final video
+    print(f"💾 Writing final video to: {output_path}", flush=True)
     final_video.write_videofile(
         output_path,
         fps=30,
         codec="libx264",
         audio_codec="aac",
-        audio_bitrate="192k",
-        threads=16,
         preset="medium",
-        write_logfile=False,
+        logger=None,
     )
     
     # Clean up
+    for clip in clips:
+        clip.close()
     audio.close()
     final_video.close()
-    for scene in scenes:
-        scene.close()
     
-    print(f"🎬 Created video: {output_path}", flush=True)
+    print(f"✅ Final video saved: {output_path}", flush=True)
     return output_path
 
 
@@ -558,15 +414,15 @@ def create_tiktok_video(
     output_dir: Optional[str] = None
 ) -> dict:
     """
-    Create a TikTok video for a union win and save it to a file.
+    Create a TikTok video for a union win using Sora-2.
 
     This orchestrates the workflow:
     1. Get the specified win (or most recent if not specified)
-    2. Generate a script
-    3. Generate AI images for scenes
-    4. Convert script to audio
-    5. Create animated video with Ken Burns effects
-    6. Save video to /videos directory
+    2. Generate a narration script
+    3. Convert script to audio using OpenAI TTS
+    4. Generate 3 video clips with Sora-2 based on win images
+    5. Combine clips and audio into final video
+    6. Save video to ./videos directory
 
     Args:
         db: Database session
@@ -593,8 +449,9 @@ def create_tiktok_video(
             }
 
     print(f"🎯 Creating TikTok for: {win['title']}", flush=True)
+    print(f"📸 Found {len(win['image_urls'])} images for this win", flush=True)
 
-    # Determine output directory - use /videos at project root
+    # Determine output directory - use ./videos at project root
     project_root = Path(__file__).parent.parent.parent
     videos_dir = project_root / "videos"
     videos_dir.mkdir(parents=True, exist_ok=True)
@@ -603,34 +460,47 @@ def create_tiktok_video(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     video_filename = f"union_win_{win['id']}_{timestamp}.mp4"
     video_path = str(videos_dir / video_filename)
-    audio_path = str(videos_dir / f"audio_{timestamp}.mp3")
     
-    # Create temp directory for images
+    # Create temp directory for intermediate files
     temp_dir = tempfile.mkdtemp()
-    image_paths = []
+    audio_path = os.path.join(temp_dir, "narration.mp3")
+    clip_paths = []
 
     try:
-        # Step 1: Generate script
-        script = generate_tiktok_script(win)
+        # Step 1: Generate narration script
+        print("\n📝 Step 1: Generating script...", flush=True)
+        script = generate_script(win)
+        print(f"   Script: {script[:100]}...", flush=True)
 
-        # Step 2: Generate AI images for scenes
-        print("🎨 Generating scene images...", flush=True)
-        image_paths = generate_scene_images(win, temp_dir)
-
-        # Step 3: Convert to audio
+        # Step 2: Convert script to audio
+        print("\n🎙️ Step 2: Converting to audio...", flush=True)
         convert_script_to_audio(script, audio_path)
 
-        # Step 4: Create animated video with images
-        create_video(audio_path, script, win, video_path, image_paths)
+        # Step 3: Generate 3 video clips with Sora-2
+        print("\n🎬 Step 3: Generating video clips with Sora-2...", flush=True)
+        image_urls = win["image_urls"][:3]  # Use up to 3 images
+        
+        for i in range(3):
+            clip_path = os.path.join(temp_dir, f"clip_{i+1}.mp4")
+            
+            # Generate prompt based on image if available, otherwise generic
+            if i < len(image_urls) and image_urls[i]:
+                print(f"   Clip {i+1}: Using image {image_urls[i][:50]}...", flush=True)
+                video_prompt = generate_video_prompt_from_image(
+                    image_urls[i], win, i + 1
+                )
+            else:
+                print(f"   Clip {i+1}: Using generic prompt", flush=True)
+                video_prompt = generate_generic_video_prompt(win, i + 1)
+            
+            print(f"   Prompt: {video_prompt[:80]}...", flush=True)
+            generate_video_clip_with_sora(video_prompt, clip_path)
+            clip_paths.append(clip_path)
+            print(f"   ✅ Clip {i+1} generated", flush=True)
 
-        # Clean up temp files
-        if os.path.exists(audio_path):
-            os.remove(audio_path)
-        for img_path in image_paths:
-            if img_path and os.path.exists(img_path):
-                os.remove(img_path)
-        if os.path.exists(temp_dir):
-            os.rmdir(temp_dir)
+        # Step 4: Combine video clips with audio
+        print("\n🎞️ Step 4: Combining clips with audio...", flush=True)
+        combine_videos_with_audio(clip_paths, audio_path, video_path)
 
         # Step 5: Create caption with hashtags
         caption = (
@@ -639,6 +509,12 @@ def create_tiktok_video(
             f"#UnionStrong #WorkersRights #UnionWins #LaborMovement"
         )
 
+        # Clean up temp files
+        for path in clip_paths + [audio_path]:
+            if os.path.exists(path):
+                os.remove(path)
+        os.rmdir(temp_dir)
+
         return {
             "success": True,
             "win_id": win["id"],
@@ -646,20 +522,18 @@ def create_tiktok_video(
             "script": script,
             "caption": caption,
             "video_path": video_path,
-            "message": "TikTok video created successfully",
+            "message": "TikTok video created successfully with Sora-2",
         }
 
     except Exception as e:
         error_msg = f"Error creating TikTok: {str(e)}"
         print(f"❌ {error_msg}", flush=True)
         # Clean up on error
-        if os.path.exists(audio_path):
-            os.remove(audio_path)
-        if os.path.exists(video_path):
-            os.remove(video_path)
-        for img_path in image_paths:
-            if img_path and os.path.exists(img_path):
-                os.remove(img_path)
+        for path in clip_paths + [audio_path, video_path]:
+            if os.path.exists(path):
+                os.remove(path)
+        if os.path.exists(temp_dir):
+            os.rmdir(temp_dir)
         return {
             "success": False,
             "win_id": win["id"] if win else None,
@@ -670,7 +544,7 @@ def create_tiktok_video(
 def main():
     """Main entry point for the TikTok video creation script."""
     parser = argparse.ArgumentParser(
-        description="Create a TikTok video for a union win"
+        description="Create a TikTok video for a union win using Sora-2"
     )
     parser.add_argument(
         "--win-id",
@@ -678,15 +552,9 @@ def main():
         default=None,
         help="ID of the win to create video for (default: most recent)"
     )
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        default=None,
-        help="Directory to save the video (default: project/videos)"
-    )
     args = parser.parse_args()
 
-    print("🎬 TikTok Video Creator for Union Wins")
+    print("🎬 TikTok Video Creator for Union Wins (Sora-2)")
     print("=" * 50)
 
     # Create database session
@@ -696,7 +564,6 @@ def main():
         result = create_tiktok_video(
             db=db,
             win_id=args.win_id,
-            output_dir=args.output_dir
         )
         
         if result["success"]:
