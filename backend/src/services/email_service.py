@@ -27,8 +27,14 @@ def generate_email_html(wins: List[UnionWinDB], subscriber_name: str | None, fre
     greeting = f"Hi {subscriber_name}" if subscriber_name else "Hi"
     period = "today" if frequency == "daily" else f"this {frequency.replace('ly', '')}"
 
+    # Limit to 10 wins if there are more
+    total_wins = len(wins)
+    display_wins = wins[:10]
+    has_more = total_wins > 10
+    has_few = total_wins > 0 and total_wins < 5
+
     wins_html = ""
-    for win in wins:
+    for win in display_wins:
         emoji = win.emoji if win.emoji else "✊"
         union = f" - {win.union_name}" if win.union_name else ""
 
@@ -84,6 +90,17 @@ def generate_email_html(wins: List[UnionWinDB], subscriber_name: str | None, fre
                 
                 <!-- Wins List -->
                 {wins_html if wins else '<p style="font-size: 14px; color: #6b7280; font-style: italic;">No new wins to report during this period.</p>'}
+                
+                {'<div style="margin: 32px 0; padding: 20px; background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; text-align: center;">' +
+                 f'<p style="font-size: 16px; color: #111827; margin: 0 0 12px 0; font-weight: 600;">And {total_wins - 10} more wins!</p>' +
+                 '<p style="font-size: 14px; color: #374151; margin: 0 0 16px 0;">There are even more union victories to celebrate.</p>' +
+                 '<a href="https://whathaveunionsdoneforus.uk/" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #ef4444; color: white; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600;">View All Wins →</a>' +
+                 '</div>' if has_more else ''}
+                
+                {'<div style="margin: 32px 0; padding: 20px; background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; text-align: center;">' +
+                 '<p style="font-size: 14px; color: #374151; margin: 0 0 16px 0;">Want to see more union victories from previous days?</p>' +
+                 '<a href="https://whathaveunionsdoneforus.uk/" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #ef4444; color: white; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600;">See More Wins →</a>' +
+                 '</div>' if has_few else ''}
             </div>
             
             <!-- Footer -->
