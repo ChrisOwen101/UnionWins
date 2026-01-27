@@ -165,19 +165,25 @@ def generate_scene_images(win: dict, temp_dir: str) -> list[str]:
     """
     image_prompts = [
         # Scene 1: Hook - Attention grabbing
-        f"Dramatic wide shot of diverse workers standing united with raised fists, "
-        f"dramatic lighting, cinematic style, powerful solidarity moment, "
-        f"professional photography, vibrant colors, 9:16 vertical format",
+        (
+            "Dramatic wide shot of diverse workers standing united with raised fists, "
+            "dramatic lighting, cinematic style, powerful solidarity moment, "
+            "professional photography, vibrant colors, 9:16 vertical format"
+        ),
         
         # Scene 2: Story - Specific to the win
-        f"Professional photo depicting {win['union_name'] or 'workers'} celebrating "
-        f"a victory related to {win['title'][:50]}, diverse group of happy workers, "
-        f"warm celebratory atmosphere, documentary style, 9:16 vertical format",
+        (
+            f"Professional photo depicting {win['union_name'] or 'workers'} celebrating "
+            f"a victory related to {win['title'][:50]}, diverse group of happy workers, "
+            f"warm celebratory atmosphere, documentary style, 9:16 vertical format"
+        ),
         
         # Scene 3: Call to action - Empowering
-        f"Inspiring image of workers joining hands in solidarity, diverse group, "
-        f"golden hour lighting, hopeful atmosphere, union strength, "
-        f"professional documentary photography, 9:16 vertical format",
+        (
+            "Inspiring image of workers joining hands in solidarity, diverse group, "
+            "golden hour lighting, hopeful atmosphere, union strength, "
+            "professional documentary photography, 9:16 vertical format"
+        ),
     ]
     
     image_paths = []
@@ -394,8 +400,6 @@ def create_video(
     effects = ["zoom_in", "pan_left", "zoom_out"]
     
     for i in range(3):
-        scene_start = i * scene_duration
-        
         # Create background for this scene
         if image_paths and image_paths[i] and os.path.exists(image_paths[i]):
             # Use AI-generated image with Ken Burns effect
