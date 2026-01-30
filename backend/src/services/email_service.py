@@ -123,19 +123,13 @@ def generate_email_html(wins: List[UnionWinDB], subscriber_name: str | None, fre
 
 
 def get_wins_since(db: Session, since: datetime) -> List[UnionWinDB]:
-    """Get all approved wins since a specific datetime."""
+    """Get all approved wins added since a specific datetime."""
     wins = db.query(UnionWinDB).filter(
-        UnionWinDB.status == "approved"
-    ).order_by(UnionWinDB.date.desc()).all()
+        UnionWinDB.status == "approved",
+        UnionWinDB.created_at >= since
+    ).order_by(UnionWinDB.created_at.desc()).all()
 
-    # Filter by date string comparison (since date is stored as string)
-    since_date_str = since.strftime("%Y-%m-%d")
-    filtered_wins = [
-        win for win in wins
-        if win.date >= since_date_str
-    ]
-
-    return filtered_wins
+    return wins
 
 
 def send_newsletter_email(
