@@ -58,8 +58,8 @@ export function AdminScrapeSources() {
             setNewUrl('')
             setNewOrg('')
             setMessage({ type: 'success', text: 'Source added successfully' })
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message })
+        } catch (err) {
+            setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to add source' })
         } finally {
             setAdding(false)
         }
@@ -74,8 +74,8 @@ export function AdminScrapeSources() {
 
             setSources(sources.filter(s => s.id !== id))
             setMessage({ type: 'success', text: 'Source removed' })
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message })
+        } catch (err) {
+            setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete source' })
         }
     }
 
@@ -84,8 +84,8 @@ export function AdminScrapeSources() {
             const response = await fetch(`/api/scraping/run/${id}`, { method: 'POST' })
             if (!response.ok) throw new Error('Failed to start scrape')
             setMessage({ type: 'success', text: 'Scrape job started in background' })
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message })
+        } catch (err) {
+            setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to start scrape' })
         }
     }
 
@@ -94,8 +94,8 @@ export function AdminScrapeSources() {
             const response = await fetch('/api/scraping/run-all', { method: 'POST' })
             if (!response.ok) throw new Error('Failed to start scrape all')
             setMessage({ type: 'success', text: 'All scrape jobs started in background' })
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message })
+        } catch (err) {
+            setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to start scrape all' })
         }
     }
 

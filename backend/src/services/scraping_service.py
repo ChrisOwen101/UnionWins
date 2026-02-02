@@ -8,7 +8,6 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
 from src.config import client
 from src.models import ScrapeSourceDB, UnionWinDB
@@ -114,7 +113,7 @@ def filter_candidates_with_llm(candidates):
             response = client.chat.completions.create(
                 model="gpt-5-nano", # Cheaper model for fast filtering
                 messages=[
-                    {"role": "system", "content": "You are a news curator for a Union Wins dashboard. Your goal is to identify links that point to specific news articles about union victories, agreements, wins, pay rises, or achievements. Ignore generic pages, indices, policy documents, or unrelated news."},
+                    {"role": "system", "content": "You are a news curator for a Union Wins dashboard. Your goal is to identify links that point to specific news articles about union victories, agreements, wins, pay rises, or achievements. Ignore generic pages, indices, policy documents, unrelated news, elections of new leadership."},
                     {"role": "user", "content": f"Analyze the following list of links. Return a JSON object with a key 'relevant_ids' containing a list of IDs (integers) that are likely Union Wins/Achievements.\n\n{prompt_text}"}
                 ],
                 response_format={"type": "json_object"}
