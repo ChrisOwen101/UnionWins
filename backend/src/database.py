@@ -102,6 +102,28 @@ def init_db():
                 conn.commit()
                 print("last_email_sent_at column added successfully!")
 
+    # Check scrape_sources table for new columns
+    if inspector.has_table('scrape_sources'):
+        scrape_columns = [
+            col['name'] for col in inspector.get_columns('scrape_sources')
+        ]
+        with engine.connect() as conn:
+            if 'last_scrape_status' not in scrape_columns:
+                print("Adding last_scrape_status column to scrape_sources table...")
+                conn.execute(
+                    text("ALTER TABLE scrape_sources ADD COLUMN last_scrape_status VARCHAR")
+                )
+                conn.commit()
+                print("last_scrape_status column added successfully!")
+
+            if 'last_scrape_error' not in scrape_columns:
+                print("Adding last_scrape_error column to scrape_sources table...")
+                conn.execute(
+                    text("ALTER TABLE scrape_sources ADD COLUMN last_scrape_error TEXT")
+                )
+                conn.commit()
+                print("last_scrape_error column added successfully!")
+
     Base.metadata.create_all(bind=engine)
     
     # Seed initial scrape sources

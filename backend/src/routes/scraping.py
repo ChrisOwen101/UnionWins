@@ -19,6 +19,8 @@ class ScrapeSourceResponse(BaseModel):
     url: str
     organization_name: Optional[str]
     last_scraped_at: Optional[datetime]
+    last_scrape_status: Optional[str]
+    last_scrape_error: Optional[str]
     is_active: int
     created_at: datetime
     
@@ -68,6 +70,23 @@ def add_source(source: ScrapeSourceCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_source)
     return new_source
+
+@router.put("/sources/{source_id}", response_model=ScrapeSourceResponse)
+def update_source(source_id: int, source_update: ScrapeSourceCreate, db: Session = Depends(get_db)):
+    source = db.query(ScrapeSourceDB).filter(ScrapeSourceDB.id == source_id).first()
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+    
+    # Check if new URL conflicts with existing active source (excluding self)
+    existing = db.query(ScrapeSourceDB).filter(ScrapeSourceDB.url == source_update.url).filter(ScrapeSourceDB.id != source_id).first()
+    if existing and existing.is_active == 1:
+        raise HTTPException(status_code=400, detail="URL already in use by another source")
+        
+    source.url = source_update.url
+    source.organization_name = source_update.organization_name
+    db.commit()
+    db.refresh(source)
+    return source
 
 @router.delete("/sources/{source_id}")
 def delete_source(source_id: int, db: Session = Depends(get_db)):

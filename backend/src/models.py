@@ -165,6 +165,8 @@ class ScrapeSourceDB(Base):
     url = Column(String, nullable=False, unique=True)
     organization_name = Column(String, nullable=True)
     last_scraped_at = Column(DateTime, nullable=True)
+    last_scrape_status = Column(String, nullable=True) # 'success' or 'error'
+    last_scrape_error = Column(Text, nullable=True)
     # Using Integer for SQLite compatibility (0 = False, 1 = True)
     is_active = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime, default=datetime.now)

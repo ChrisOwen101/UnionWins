@@ -5,6 +5,7 @@ import logging
 import json
 import requests
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from sqlalchemy.orm import Session
@@ -147,71 +148,120 @@ def run_scrape_for_source(db: Session, source_id: int):
     # 1. Fetch
     html = fetch_page_content(source.url)
     if not html:
+        source.last_scraped_at = datetime.now()
+        source.last_scrape_status = "error"
+        source.last_scrape_error = "Failed to fetch page content"
+        db.commit()
         return {"status": "error", "message": "Failed to fetch page"}
         
     # 2. Extract
-    candidates = extract_candidates(source.url, html)
-    logger.info(f"Found {len(candidates)} raw links")
-    
-    # 3. Dedup against DB (UnionWinDB)
-    # We want to check if we've already imported these URLs recently
-    # To save tokens, we check DB existence BEFORE LLM filter
-    
-    candidate_urls = [c['url'] for c in candidates]
-    
-    # Check for exact matches in DB
-    existing_wins = db.query(UnionWinDB.url).filter(UnionWinDB.url.in_(candidate_urls)).all()
-    existing_urls = {w[0] for w in existing_wins}
-    
-    new_candidates = [c for c in candidates if c['url'] not in existing_urls]
-    logger.info(f"Filtered down to {len(new_candidates)} new candidates (removed {len(existing_urls)} duplicates)")
-    
-    if not new_candidates:
-        source.last_scraped_at = datetime.now()
-        db.commit()
-        return {"status": "success", "new_wins": 0, "message": "No new links found"}
+    try:
+        candidates = extract_candidates(source.url, html)
+        logger.info(f"Found {len(candidates)} raw links")
+        
+        # 3. Dedup against DB (UnionWinDB)
+        # We want to check if we've already imported these URLs recently
+        # To save tokens, we check DB existence BEFORE LLM filter
+        
+        candidate_urls = [c['url'] for c in candidates]
+        
+        # Check for exact matches in DB
+        existing_wins = db.query(UnionWinDB.url).filter(UnionWinDB.url.in_(candidate_urls)).all()
+        existing_urls = {w[0] for w in existing_wins}
+        
+        new_candidates = [c for c in candidates if c['url'] not in existing_urls]
+        logger.info(f"Filtered down to {len(new_candidates)} new candidates (removed {len(existing_urls)} duplicates)")
+        
+        if not new_candidates:
+            source.last_scraped_at = datetime.now()
+            source.last_scrape_status = "success"
+            source.last_scrape_error = None
+            db.commit()
+            return {"status": "success", "new_wins": 0, "message": "No new links found"}
 
-    # 4. Filter with LLM
-    likely_wins = filter_candidates_with_llm(new_candidates)
-    logger.info(f"LLM identified {len(likely_wins)} likely wins")
-    
-    # 5. Submit
-    submitted_count = 0
-    for win_candidate in likely_wins:
-        try:
-            # We call create_submission.
-            # create_submission will do the "Heavy" scrape using GPT-5.2 or equivalent to extract details
+        # 4. Filter with LLM
+        likely_wins = filter_candidates_with_llm(new_candidates)
+        logger.info(f"LLM identified {len(likely_wins)} likely wins")
+        
+        # 5. Submit
+        submitted_count = 0
+        for win_candidate in likely_wins:
             try:
-                create_submission(db, win_candidate['url'], submitted_by="AutoScraper")
-                submitted_count += 1
-            except ValueError as ve:
-                if "already" in str(ve).lower():
-                    continue
-                logger.warning(f"Submission failed for {win_candidate['url']}: {ve}")
+                # We call create_submission.
+                # create_submission will do the "Heavy" scrape using GPT-5.2 or equivalent to extract details
+                try:
+                    create_submission(db, win_candidate['url'], submitted_by="AutoScraper")
+                    submitted_count += 1
+                except ValueError as ve:
+                    if "already" in str(ve).lower():
+                        continue
+                    logger.warning(f"Submission failed for {win_candidate['url']}: {ve}")
+                except Exception as e:
+                    logger.error(f"Error submitting {win_candidate['url']}: {e}")
+                    
             except Exception as e:
-                logger.error(f"Error submitting {win_candidate['url']}: {e}")
+                logger.error(f"Critical error in loop: {e}")
                 
-        except Exception as e:
-            logger.error(f"Critical error in loop: {e}")
-            
-    # Update source stats
-    source.last_scraped_at = datetime.now()
-    db.commit()
-    
-    return {
-        "status": "success",
-        "scraped_at": source.last_scraped_at,
-        "raw_links_found": len(candidates),
-        "new_links_checked": len(new_candidates),
-        "wins_identified": len(likely_wins),
-        "wins_submitted": submitted_count
-    }
+        # Update source stats
+        source.last_scraped_at = datetime.now()
+        source.last_scrape_status = "success"
+        source.last_scrape_error = None
+        db.commit()
+        
+        return {
+            "status": "success",
+            "scraped_at": source.last_scraped_at,
+            "raw_links_found": len(candidates),
+            "new_links_checked": len(new_candidates),
+            "wins_identified": len(likely_wins),
+            "wins_submitted": submitted_count
+        }
+    except Exception as e:
+        logger.error(f"Scrape failed for {source.url}: {e}")
+        source.last_scraped_at = datetime.now()
+        source.last_scrape_status = "error"
+        source.last_scrape_error = str(e)
+        db.commit()
+        return {"status": "error", "message": f"Scrape failed: {e}"}
+
+from src.database import SessionLocal
+
+def run_scrape_for_source_safe(source_id: int):
+    """
+    Wrapper to run scrape for a source with its own DB session.
+    Safe for threading.
+    """
+    db = SessionLocal()
+    try:
+        return run_scrape_for_source(db, source_id)
+    except Exception as e:
+        logger.error(f"Threaded scrape failed for {source_id}: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
 
 def run_all_scrapes(db: Session):
-    """Run scraping for all active sources."""
-    sources = db.query(ScrapeSourceDB).filter(ScrapeSourceDB.is_active == 1).all()
+    """Run scraping for all active sources in parallel."""
+    # We query IDs first, then let each thread handle its own DB session/object
+    # This avoids sharing the same session across threads which causes concurrency issues
+    source_ids = [s[0] for s in db.query(ScrapeSourceDB.id).filter(ScrapeSourceDB.is_active == 1).all()]
+    
     results = []
-    for source in sources:
-        res = run_scrape_for_source(db, source.id)
-        results.append({"source": source.url, "result": res})
+    logger.info(f"Starting parallel scrape for {len(source_ids)} sources...")
+    
+    # Use ThreadPoolExecutor to run scrapes in parallel
+    # Limit max_workers to avoid destroying the CPU/Network or hitting rate limits too hard
+    # 5 workers is usually a safe bet for IO-bound scraping tasks on a single node
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_id = {executor.submit(run_scrape_for_source_safe, sid): sid for sid in source_ids}
+        
+        for future in as_completed(future_to_id):
+            sid = future_to_id[future]
+            try:
+                res = future.result()
+                results.append({"source_id": sid, "result": res})
+            except Exception as e:
+                logger.error(f"Scrape job failed for {sid}: {e}")
+                results.append({"source_id": sid, "result": {"status": "error", "message": str(e)}})
+                
     return results
