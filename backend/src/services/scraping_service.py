@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 from sqlalchemy.orm import Session
 
 from src.config import client
+from src.database import SessionLocal
 from src.models import ScrapeSourceDB, UnionWinDB
 from src.services.submission_service import create_submission
 
@@ -224,7 +225,6 @@ def run_scrape_for_source(db: Session, source_id: int):
         db.commit()
         return {"status": "error", "message": f"Scrape failed: {e}"}
 
-from src.database import SessionLocal
 
 def run_scrape_for_source_safe(source_id: int):
     """
