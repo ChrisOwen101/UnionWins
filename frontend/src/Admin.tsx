@@ -5,10 +5,11 @@ import { AdminSearchStatus } from './components/AdminSearchStatus'
 import { AdminPendingSubmissions } from './components/AdminPendingSubmissions'
 import { AdminRecentWins } from './components/AdminRecentWins'
 import { AdminApiKeys } from './components/AdminApiKeys'
+import { AdminScrapeSources } from './components/AdminScrapeSources'
 import { AdminNewsletterSubscribers } from './components/AdminNewsletterSubscribers'
 import { Footer } from './components/Footer'
 
-type TabId = 'pending' | 'recent' | 'search' | 'status' | 'api-keys' | 'newsletter'
+type TabId = 'pending' | 'recent' | 'search' | 'status' | 'api-keys' | 'newsletter' | 'scraping'
 
 interface Tab {
     id: TabId
@@ -20,6 +21,7 @@ const tabs: Tab[] = [
     { id: 'recent', label: 'Recent Wins' },
     { id: 'search', label: 'Search' },
     { id: 'status', label: 'Search Status' },
+    { id: 'scraping', label: 'Scraping' },
     { id: 'api-keys', label: 'API Keys' },
     { id: 'newsletter', label: 'Newsletter' },
 ]
@@ -182,6 +184,11 @@ function AdminDashboard({ adminPassword }: { adminPassword: string }) {
                     {activeTab === 'status' && (
                         <div role="tabpanel" id="panel-status" aria-labelledby="tab-status">
                             <AdminSearchStatus />
+                        </div>
+                    )}
+                    {activeTab === 'scraping' && (
+                        <div role="tabpanel" id="panel-scraping" aria-labelledby="tab-scraping">
+                            <AdminScrapeSources />
                         </div>
                     )}
                     {activeTab === 'api-keys' && (

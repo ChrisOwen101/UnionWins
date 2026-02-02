@@ -9,6 +9,7 @@ from src.database import get_db
 from src.models import SearchRequestDB
 from src.services.search_service import calculate_date_range, create_search_request
 from src.services.email_service import send_daily_newsletters, send_weekly_newsletters, send_monthly_newsletters
+from src.services.scraping_service import run_all_scrapes
 
 
 def scheduled_search_job() -> None:
@@ -81,6 +82,20 @@ def monthly_newsletter_job() -> None:
         print(f"❌ Error in monthly newsletter job: {e}", flush=True)
         if db:
             db.rollback()
+    finally:
+        if db:
+            db.close()
+
+
+def weekly_scraping_job() -> None:
+    """Run website scraping on Monday at 2:00 AM."""
+    db = None
+    try:
+        db = next(get_db())
+        results = run_all_scrapes(db)
+        print(f"🕸️ Weekly scraping completed. Scraped {len(results)} sources.", flush=True)
+    except Exception as e:
+        print(f"❌ Error in weekly scraping job: {e}", flush=True)
     finally:
         if db:
             db.close()
@@ -168,6 +183,15 @@ def start_scheduler() -> None:
             trigger=CronTrigger(day=1, hour=9, minute=0),
             id='monthly_newsletter',
             name='Monthly newsletter on 1st at 9:00 AM',
+            replace_existing=True
+        )
+
+        # Weekly scraping on Monday at 2:00 AM
+        scheduler.add_job(
+            weekly_scraping_job,
+            trigger=CronTrigger(day_of_week='mon', hour=2, minute=0),
+            id='weekly_scrape',
+            name='Weekly Website Scraping',
             replace_existing=True
         )
 

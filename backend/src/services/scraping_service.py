@@ -1,0 +1,218 @@
+"""
+Service for scraping union websites for potential wins.
+"""
+import logging
+import json
+import requests
+from datetime import datetime
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+
+from src.config import client
+from src.models import ScrapeSourceDB, UnionWinDB
+from src.services.submission_service import create_submission
+
+logger = logging.getLogger(__name__)
+
+def fetch_page_content(url: str):
+    """Fetch HTML content from a URL."""
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=30)
+        response.raise_for_status()
+        return response.text
+    except Exception as e:
+        logger.error(f"Error fetching {url}: {e}")
+        return None
+
+def extract_candidates(base_url, html_content):
+    """
+    Extract potential article links from HTML content.
+    Returns a list of dicts with url, text, and context.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    candidates = []
+    seen_urls = set()
+    
+    # Heuristic: Focus on main content areas if possible, but comprehensive for now
+    # We look for 'a' tags with hrefs
+    for a in soup.find_all('a', href=True):
+        href = a['href']
+        full_url = urljoin(base_url, href)
+        
+        # Normalize URL (simple)
+        full_url = full_url.split('#')[0]
+        
+        if full_url in seen_urls:
+            continue
+        
+        # Basic filtering to skip obviously irrelevant links
+        lower_url = full_url.lower()
+        if not full_url.startswith('http'):
+            continue
+        
+        # Skip same-page links or common non-article pages
+        skip_keywords = [
+            '/login', '/register', '/signin', '/signup', 
+            '/contact', '/about', '/privacy', '/terms', 
+            '/search', '/join', '/member', 'javascript:', 'mailto:'
+        ]
+        if any(k in lower_url for k in skip_keywords):
+            continue
+            
+        # Get link text and surrounding context
+        text = a.get_text(strip=True)
+        if not text:
+            # Try looking for nested image alt or title
+            img = a.find('img')
+            if img:
+                text = img.get('alt') or img.get('title') or ""
+        
+        if not text or len(text) < 5:
+            continue
+            
+        # Context: Get text from the parent element to give more info
+        parent = a.find_parent()
+        context = parent.get_text(strip=True)[:300] if parent else ""
+        
+        seen_urls.add(full_url)
+        candidates.append({
+            "url": full_url,
+            "text": text,
+            "context": context
+        })
+        
+    return candidates
+
+def filter_candidates_with_llm(candidates):
+    """
+    Use LLM to identify which candidates are likely "Wins" or "Achievements".
+    Returns a list of candidate dicts that passed the filter.
+    """
+    if not candidates:
+        return []
+    
+    # We'll process in batches to match token limits/costs
+    batch_size = 20
+    good_candidates = []
+    
+    for i in range(0, len(candidates), batch_size):
+        batch = candidates[i:i+batch_size]
+        
+        # Prepare lightweight representation for LLM
+        prompt_items = []
+        for idx, item in enumerate(batch):
+            prompt_items.append(f"ID {idx}: TEXT: {item['text']} | URL: {item['url']} | CONTEXT: {item['context']}")
+            
+        prompt_text = "\n".join(prompt_items)
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-5-nano", # Cheaper model for fast filtering
+                messages=[
+                    {"role": "system", "content": "You are a news curator for a Union Wins dashboard. Your goal is to identify links that point to specific news articles about union victories, agreements, wins, pay rises, or achievements. Ignore generic pages, indices, policy documents, or unrelated news."},
+                    {"role": "user", "content": f"Analyze the following list of links. Return a JSON object with a key 'relevant_ids' containing a list of IDs (integers) that are likely Union Wins/Achievements.\n\n{prompt_text}"}
+                ],
+                response_format={"type": "json_object"}
+            )
+            
+            result_json = json.loads(response.choices[0].message.content)
+            relevant_ids = result_json.get("relevant_ids", [])
+            
+            for rid in relevant_ids:
+                if 0 <= rid < len(batch):
+                    good_candidates.append(batch[rid])
+                    
+        except Exception as e:
+            logger.error(f"Error filtering candidates with LLM: {e}")
+            # On error, maybe skip or assume all false? Skip for safety.
+            continue
+            
+    return good_candidates
+
+def run_scrape_for_source(db: Session, source_id: int):
+    """
+    Execute the scraping pipeline for a specific source.
+    """
+    source = db.query(ScrapeSourceDB).filter(ScrapeSourceDB.id == source_id).first()
+    if not source:
+        logger.error(f"Source ID {source_id} not found.")
+        return {"status": "error", "message": "Source not found"}
+        
+    logger.info(f"Starting scrape for {source.url}")
+    
+    # 1. Fetch
+    html = fetch_page_content(source.url)
+    if not html:
+        return {"status": "error", "message": "Failed to fetch page"}
+        
+    # 2. Extract
+    candidates = extract_candidates(source.url, html)
+    logger.info(f"Found {len(candidates)} raw links")
+    
+    # 3. Dedup against DB (UnionWinDB)
+    # We want to check if we've already imported these URLs recently
+    # To save tokens, we check DB existence BEFORE LLM filter
+    
+    candidate_urls = [c['url'] for c in candidates]
+    
+    # Check for exact matches in DB
+    existing_wins = db.query(UnionWinDB.url).filter(UnionWinDB.url.in_(candidate_urls)).all()
+    existing_urls = {w[0] for w in existing_wins}
+    
+    new_candidates = [c for c in candidates if c['url'] not in existing_urls]
+    logger.info(f"Filtered down to {len(new_candidates)} new candidates (removed {len(existing_urls)} duplicates)")
+    
+    if not new_candidates:
+        source.last_scraped_at = datetime.now()
+        db.commit()
+        return {"status": "success", "new_wins": 0, "message": "No new links found"}
+
+    # 4. Filter with LLM
+    likely_wins = filter_candidates_with_llm(new_candidates)
+    logger.info(f"LLM identified {len(likely_wins)} likely wins")
+    
+    # 5. Submit
+    submitted_count = 0
+    for win_candidate in likely_wins:
+        try:
+            # We call create_submission.
+            # create_submission will do the "Heavy" scrape using GPT-5.2 or equivalent to extract details
+            try:
+                create_submission(db, win_candidate['url'], submitted_by="AutoScraper")
+                submitted_count += 1
+            except ValueError as ve:
+                if "already" in str(ve).lower():
+                    continue
+                logger.warning(f"Submission failed for {win_candidate['url']}: {ve}")
+            except Exception as e:
+                logger.error(f"Error submitting {win_candidate['url']}: {e}")
+                
+        except Exception as e:
+            logger.error(f"Critical error in loop: {e}")
+            
+    # Update source stats
+    source.last_scraped_at = datetime.now()
+    db.commit()
+    
+    return {
+        "status": "success",
+        "scraped_at": source.last_scraped_at,
+        "raw_links_found": len(candidates),
+        "new_links_checked": len(new_candidates),
+        "wins_identified": len(likely_wins),
+        "wins_submitted": submitted_count
+    }
+
+def run_all_scrapes(db: Session):
+    """Run scraping for all active sources."""
+    sources = db.query(ScrapeSourceDB).filter(ScrapeSourceDB.is_active == 1).all()
+    results = []
+    for source in sources:
+        res = run_scrape_for_source(db, source.id)
+        results.append({"source": source.url, "result": res})
+    return results

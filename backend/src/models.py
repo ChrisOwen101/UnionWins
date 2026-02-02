@@ -155,3 +155,16 @@ class NewsletterSubscriptionDB(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     last_email_sent_at = Column(DateTime, nullable=True)
+
+
+class ScrapeSourceDB(Base):
+    """Model for managing URLs to scrape."""
+    __tablename__ = "scrape_sources"
+
+    id = Column(Integer, primary_key=True, index=True)
+    url = Column(String, nullable=False, unique=True)
+    organization_name = Column(String, nullable=True)
+    last_scraped_at = Column(DateTime, nullable=True)
+    # Using Integer for SQLite compatibility (0 = False, 1 = True)
+    is_active = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime, default=datetime.now)
