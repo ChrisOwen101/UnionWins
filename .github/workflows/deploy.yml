@@ -85,10 +85,11 @@ jobs:
           sshpass -p "$DEPLOY_PASSWORD" scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT /tmp/deploy.env $DEPLOY_USER@$DEPLOY_HOST:~/unionwins/.env
 
           # Deploy via SSH
+          # Note: Package must be public for unauthenticated pulls, or use a PAT with read:packages scope
           sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "cd ~/unionwins && \
             if [ -d .git ]; then git pull origin main; else git clone $REPO_URL .; fi && \
-            echo '$REGISTRY_TOKEN' | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin && \
             docker pull $REGISTRY/$IMAGE_NAME:latest && \
-            docker compose down 2>/dev/null || true && \
+            docker stop unionwins 2>/dev/null || true && \
+            docker rm unionwins 2>/dev/null || true && \
             docker compose up -d && \
             echo 'Deployment completed successfully!'"
