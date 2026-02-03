@@ -114,7 +114,7 @@ function Home() {
                 />
 
                 {loading && !isSearching ? (
-                    <LoadingState />
+                    <LoadingState fillScreen />
                 ) : (
                     <WinsList
                         wins={filteredWins}
