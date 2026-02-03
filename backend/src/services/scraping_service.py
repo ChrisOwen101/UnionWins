@@ -3,7 +3,11 @@ Service for scraping union websites for potential wins.
 """
 import logging
 import json
+import random
+import time
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup
@@ -17,18 +21,106 @@ from src.services.submission_service import create_submission
 
 logger = logging.getLogger(__name__)
 
-def fetch_page_content(url: str):
-    """Fetch HTML content from a URL."""
+# Rotating user agents to avoid bot detection
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+]
+
+
+def create_session_with_retries(max_retries: int = 3) -> requests.Session:
+    """Create a requests session with retry logic and connection pooling."""
+    session = requests.Session()
+    
+    retry_strategy = Retry(
+        total=max_retries,
+        backoff_factor=1,  # Wait 1s, 2s, 4s between retries
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "GET", "OPTIONS"],
+    )
+    
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    return session
+
+
+def fetch_page_content(url: str, verify_ssl: bool = True, retry_without_ssl: bool = True):
+    """
+    Fetch HTML content from a URL with robust error handling.
+    
+    Args:
+        url: The URL to fetch
+        verify_ssl: Whether to verify SSL certificates (True by default)
+        retry_without_ssl: If SSL fails, retry without verification
+    
+    Returns:
+        HTML content as string, or None if fetch failed
+    """
+    session = create_session_with_retries()
+    
+    # More comprehensive headers to appear as a real browser
+    headers = {
+        'User-Agent': random.choice(USER_AGENTS),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+    }
+    
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get(url, headers=headers, timeout=30)
+        # Add a small random delay to be more polite and avoid rate limiting
+        time.sleep(random.uniform(0.5, 1.5))
+        
+        response = session.get(
+            url, 
+            headers=headers, 
+            timeout=30,
+            verify=verify_ssl,
+            allow_redirects=True
+        )
         response.raise_for_status()
         return response.text
+        
+    except requests.exceptions.SSLError as e:
+        if retry_without_ssl and verify_ssl:
+            logger.warning(f"SSL error for {url}, retrying without SSL verification: {e}")
+            # Retry without SSL verification for sites with certificate issues
+            return fetch_page_content(url, verify_ssl=False, retry_without_ssl=False)
+        logger.error(f"SSL error fetching {url}: {e}")
+        return None
+        
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None and e.response.status_code == 403:
+            logger.warning(f"403 Forbidden for {url} - site may be blocking scrapers")
+        else:
+            logger.error(f"HTTP error fetching {url}: {e}")
+        return None
+        
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Connection error fetching {url}: {e}")
+        return None
+        
+    except requests.exceptions.Timeout as e:
+        logger.error(f"Timeout fetching {url}: {e}")
+        return None
+        
     except Exception as e:
         logger.error(f"Error fetching {url}: {e}")
         return None
+    finally:
+        session.close()
 
 def extract_candidates(base_url, html_content):
     """
@@ -151,7 +243,7 @@ def run_scrape_for_source(db: Session, source_id: int):
     if not html:
         source.last_scraped_at = datetime.now()
         source.last_scrape_status = "error"
-        source.last_scrape_error = "Failed to fetch page content"
+        source.last_scrape_error = "Failed to fetch page content - site may be blocking scrapers, have SSL issues, or be temporarily unavailable"
         db.commit()
         return {"status": "error", "message": "Failed to fetch page"}
         
