@@ -92,8 +92,6 @@ jobs:
           sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "cd ~/unionwins && \
             if [ -d .git ]; then git pull origin main; else git clone $REPO_URL .; fi && \
             echo '$REGISTRY_TOKEN' | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin && \
-            docker pull $REGISTRY/$IMAGE_NAME:latest && \
-            docker compose down 2>/dev/null || true && \
-            docker network connect unionwins_unionwins-network unionwins-db-1 2>/dev/null || true && \
-            docker compose up -d --build && \
+            docker compose pull && \
+            docker compose up -d --build --force-recreate && \
             echo 'Deployment completed successfully!'"
