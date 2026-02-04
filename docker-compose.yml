@@ -17,6 +17,30 @@ services:
     networks:
       - unionwins-network
 
+  umami:
+    build:
+      context: .
+      dockerfile: Dockerfile.umami
+    container_name: umami
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4444:3000"
+    environment:
+      - DATABASE_URL=${UMAMI_DATABASE_URL}
+      - APP_SECRET=${UMAMI_APP_SECRET}
+      - DISABLE_TELEMETRY=1
+    networks:
+      - unionwins-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost:3000/analytics/api/heartbeat || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   unionwins-network:
     driver: bridge

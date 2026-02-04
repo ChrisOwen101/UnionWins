@@ -71,6 +71,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          UMAMI_APP_SECRET: ${{ secrets.UMAMI_APP_SECRET }}
+          UMAMI_DATABASE_URL: ${{ secrets.UMAMI_DATABASE_URL }}
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p $DEPLOY_PORT $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
@@ -80,6 +82,8 @@ jobs:
           echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> /tmp/deploy.env
           echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> /tmp/deploy.env
           echo "RESEND_API_KEY=$RESEND_API_KEY" >> /tmp/deploy.env
+          echo "UMAMI_APP_SECRET=$UMAMI_APP_SECRET" >> /tmp/deploy.env
+          echo "UMAMI_DATABASE_URL=$UMAMI_DATABASE_URL" >> /tmp/deploy.env
 
           # Copy .env file to server
           sshpass -p "$DEPLOY_PASSWORD" scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT /tmp/deploy.env $DEPLOY_USER@$DEPLOY_HOST:~/unionwins/.env
@@ -90,5 +94,6 @@ jobs:
             echo '$REGISTRY_TOKEN' | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin && \
             docker pull $REGISTRY/$IMAGE_NAME:latest && \
             docker compose down 2>/dev/null || true && \
-            docker compose up -d && \
+            docker network connect unionwins_unionwins-network unionwins-db-1 2>/dev/null || true && \
+            docker compose up -d --build && \
             echo 'Deployment completed successfully!'"

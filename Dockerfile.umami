@@ -1,0 +1,2 @@
+# Umami Analytics - using prebuilt image
+FROM ghcr.io/umami-software/umami:postgresql-latest
