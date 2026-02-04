@@ -5,6 +5,7 @@ import ApiSignup from './ApiSignup'
 import Stats from './Stats'
 import TermsOfService from './TermsOfService'
 import PrivacyPolicy from './PrivacyPolicy'
+import Newsletter from './Newsletter'
 
 function App() {
     const skipToMainContent = () => {
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/newsletter" element={<Newsletter />} />
             </Routes>
         </Router>
     )

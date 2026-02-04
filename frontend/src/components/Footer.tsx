@@ -15,6 +15,12 @@ export const Footer: React.FC = () => {
                     </p>
                     <nav aria-label="Footer navigation" className="flex gap-4">
                         <Link
+                            to="/newsletter"
+                            className="text-sm text-gray-600 hover:text-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 rounded px-2 py-1"
+                        >
+                            Newsletter
+                        </Link>
+                        <Link
                             to="/terms"
                             className="text-sm text-gray-600 hover:text-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 rounded px-2 py-1"
                         >
