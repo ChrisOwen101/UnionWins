@@ -5,11 +5,15 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from src.database import get_db
 from src.models import SearchRequestDB
 from src.services.search_service import calculate_date_range, create_search_request
 from src.services.email_service import send_daily_newsletters, send_weekly_newsletters, send_monthly_newsletters
 from src.services.scraping_service import run_all_scrapes
+
+# UK timezone for scheduling newsletters
+UK_TIMEZONE = ZoneInfo("Europe/London")
 
 
 def scheduled_search_job() -> None:
@@ -158,38 +162,38 @@ def start_scheduler() -> None:
             next_run_time=next_run
         )
 
-        # Add newsletter jobs
-        # Daily newsletters at 9:00 AM every day
+        # Add newsletter jobs with UK timezone
+        # Daily newsletters at 9:00 AM UK time every day
         scheduler.add_job(
             daily_newsletter_job,
-            trigger=CronTrigger(hour=9, minute=0),
+            trigger=CronTrigger(hour=9, minute=0, timezone=UK_TIMEZONE),
             id='daily_newsletter',
-            name='Daily newsletter at 9:00 AM',
+            name='Daily newsletter at 9:00 AM UK',
             replace_existing=True
         )
 
-        # Weekly newsletters on Monday at 9:00 AM
+        # Weekly newsletters on Monday at 9:00 AM UK time
         scheduler.add_job(
             weekly_newsletter_job,
-            trigger=CronTrigger(day_of_week='mon', hour=9, minute=0),
+            trigger=CronTrigger(day_of_week='mon', hour=9, minute=0, timezone=UK_TIMEZONE),
             id='weekly_newsletter',
-            name='Weekly newsletter on Monday at 9:00 AM',
+            name='Weekly newsletter on Monday at 9:00 AM UK',
             replace_existing=True
         )
 
-        # Monthly newsletters on the 1st at 9:00 AM
+        # Monthly newsletters on the 1st at 9:00 AM UK time
         scheduler.add_job(
             monthly_newsletter_job,
-            trigger=CronTrigger(day=1, hour=9, minute=0),
+            trigger=CronTrigger(day=1, hour=9, minute=0, timezone=UK_TIMEZONE),
             id='monthly_newsletter',
-            name='Monthly newsletter on 1st at 9:00 AM',
+            name='Monthly newsletter on 1st at 9:00 AM UK',
             replace_existing=True
         )
 
-        # Weekly scraping on Monday at 2:00 AM
+        # Weekly scraping on Monday at 2:00 AM UK time
         scheduler.add_job(
             weekly_scraping_job,
-            trigger=CronTrigger(day_of_week='mon', hour=2, minute=0),
+            trigger=CronTrigger(day_of_week='mon', hour=2, minute=0, timezone=UK_TIMEZONE),
             id='weekly_scrape',
             name='Weekly Website Scraping',
             replace_existing=True
@@ -199,7 +203,12 @@ def start_scheduler() -> None:
         print("✅ Scheduler started - will run search every 12 hours", flush=True)
         print(
             f"📅 Next scheduled search: {scheduler.get_job('twelve_hour_search').next_run_time.strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
-        print("✅ Newsletter jobs scheduled (daily 9AM, weekly Mon 9AM, monthly 1st 9AM)", flush=True)
+        print("✅ Newsletter jobs scheduled (daily 9AM UK, weekly Mon 9AM UK, monthly 1st 9AM UK)", flush=True)
+        
+        # Print next run times for newsletter jobs
+        daily_job = scheduler.get_job('daily_newsletter')
+        if daily_job:
+            print(f"📧 Next daily newsletter: {daily_job.next_run_time.strftime('%Y-%m-%d %H:%M:%S %Z')}", flush=True)
 
 
 def stop_scheduler() -> None:
