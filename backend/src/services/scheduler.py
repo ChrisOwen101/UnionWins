@@ -166,18 +166,18 @@ def start_scheduler() -> None:
         # Daily newsletters at 9:00 AM UK time every day
         scheduler.add_job(
             daily_newsletter_job,
-            trigger=CronTrigger(hour=9, minute=0, timezone=UK_TIMEZONE),
+            trigger=CronTrigger(hour=8, minute=0, timezone=UK_TIMEZONE),
             id='daily_newsletter',
-            name='Daily newsletter at 9:00 AM UK',
+            name='Daily newsletter at 8:00 AM UK',
             replace_existing=True
         )
 
         # Weekly newsletters on Monday at 9:00 AM UK time
         scheduler.add_job(
             weekly_newsletter_job,
-            trigger=CronTrigger(day_of_week='mon', hour=9, minute=0, timezone=UK_TIMEZONE),
+            trigger=CronTrigger(day_of_week='sun', hour=14, minute=0, timezone=UK_TIMEZONE),
             id='weekly_newsletter',
-            name='Weekly newsletter on Monday at 9:00 AM UK',
+            name='Weekly newsletter on Sunday at 2:00 PM UK',
             replace_existing=True
         )
 
