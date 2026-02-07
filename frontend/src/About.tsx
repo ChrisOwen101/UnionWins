@@ -20,7 +20,14 @@ function About() {
 
                 <div className="prose prose-gray max-w-none">
                     <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">What is this?</h2>
+                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Why?</h2>
+                        <p className="text-gray-700 mb-4">
+                            Every day, <strong>unions across the UK are winning victories for workers</strong>. From securing better pay and benefits to improving working conditions and fighting for workers' rights, unions are making a real difference in people's lives. However, <strong>these wins are often forgotten</strong> or lost in the noise of daily news. What Have Unions Done For Us? aims to change that by creating a central hub to celebrate and highlight the incredible work unions are doing across the country.
+                        </p>
+                    </section>
+
+                    <section className="mb-8">
+                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">What?</h2>
                         <p className="text-gray-700 mb-4">
                             What Have Unions Done For Us? is a collection of recent union victories and achievements.
                             We track and showcase the real-world impact unions have on workers' lives, from wage increases
@@ -29,19 +36,10 @@ function About() {
                     </section>
 
                     <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Why?</h2>
-                        <p className="text-gray-700 mb-4">
-                            In an era where union organizing is experiencing a resurgence, it's important to document
-                            and celebrate these wins. This platform serves as both a record of union achievements and
-                            inspiration for workers considering organizing their own workplaces.
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">How does it work?</h2>
+                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">How?</h2>
                         <p className="text-gray-700 mb-4">
                             We collect union wins from various sources including news articles, union announcements,
-                            and community submissions. Each win is verified and categorized to make it easy to browse
+                            and community submissions. Each win is verified and categorised to make it easy to browse
                             and search through the victories.
                         </p>
                         <p className="text-gray-700 mb-4">
@@ -51,11 +49,20 @@ function About() {
                     </section>
 
                     <section className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Get Involved</h2>
+                        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Who?</h2>
                         <p className="text-gray-700 mb-4">
-                            Know of a recent union win we haven't covered? Submit it using the form on the homepage.
-                            Want to stay updated? Subscribe to our newsletter to get the latest union victories
-                            delivered to your inbox.
+                            This project was created by Chris Owen, a political technologist and software developer.
+                            If you have any questions, suggestions, or want to contribute, feel free to reach out at
+                            <a href="mailto:cowen19921@gmail.com " className="text-orange-600 hover:underline">
+                                cowen19921@gmail.com
+                            </a> or connect on <a
+                                href="https://www.linkedin.com/in/chrisowen101/"
+                                className="text-orange-600 hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                LinkedIn
+                            </a>.
                         </p>
                     </section>
                 </div>
