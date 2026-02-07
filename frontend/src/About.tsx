@@ -38,7 +38,7 @@ function About() {
                     <section className="mb-8">
                         <h2 className="text-2xl font-semibold text-gray-900 mb-4">How?</h2>
                         <p className="text-gray-700 mb-4">
-                            We collect union wins from various sources including news articles, union announcements,
+                            We automatically collect union wins from various sources including news articles, union announcements,
                             and community submissions. Each win is verified and categorised to make it easy to browse
                             and search through the victories.
                         </p>
@@ -52,10 +52,11 @@ function About() {
                         <h2 className="text-2xl font-semibold text-gray-900 mb-4">Who?</h2>
                         <p className="text-gray-700 mb-4">
                             This project was created by Chris Owen, a political technologist and software developer.
-                            If you have any questions, suggestions, or want to contribute, feel free to reach out at
-                            <a href="mailto:cowen19921@gmail.com " className="text-orange-600 hover:underline">
-                                cowen19921@gmail.com
-                            </a> or connect on <a
+                        </p>
+                        <p className="text-gray-700 mb-4">
+                            If you have any questions, suggestions, or want to contribute, feel free to reach out to me via <a href="mailto:cowen19921@gmail.com " className="text-orange-600 hover:underline">
+                                email
+                            </a> or connect me on <a
                                 href="https://www.linkedin.com/in/chrisowen101/"
                                 className="text-orange-600 hover:underline"
                                 target="_blank"
