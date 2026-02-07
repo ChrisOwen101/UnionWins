@@ -3,6 +3,7 @@ import Home from './Home'
 import Admin from './Admin'
 import ApiSignup from './ApiSignup'
 import Stats from './Stats'
+import About from './About'
 import TermsOfService from './TermsOfService'
 import PrivacyPolicy from './PrivacyPolicy'
 import Newsletter from './Newsletter'
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/api-signup" element={<ApiSignup />} />
                 <Route path="/stats" element={<Stats />} />
+                <Route path="/about" element={<About />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/newsletter" element={<Newsletter />} />

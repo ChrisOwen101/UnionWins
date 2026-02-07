@@ -1,10 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useWins } from './hooks/useWins'
-import { Header } from './components/Header'
-import { SearchInput } from './components/SearchInput'
-import { LoadingState } from './components/LoadingState'
-import { WinsList } from './components/WinsList'
-import { SubmitWinModal, NewsletterNotification, FilterControls, Footer } from './components'
+import { Header, SearchInput, LoadingState, WinsList, SubmitWinModal, NewsletterNotification, FilterControls, Footer } from './components'
 import { filterWinsByTypesAndUnion } from './utils/filterHelpers'
 import type { WinType } from './types'
 
@@ -83,7 +79,6 @@ function Home() {
         <div className="min-h-screen bg-neutral-50">
             <Header
                 title="What Have Unions Done For Us?"
-                showAdminLink
                 onSubmitClick={() => setIsSubmitModalOpen(true)}
             />
 

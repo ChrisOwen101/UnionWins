@@ -1,4 +1,5 @@
 export { Header } from './Header'
+export { ActionBar } from './ActionBar'
 export { SearchInput } from './SearchInput'
 export { LoadingState } from './LoadingState'
 export { WinsList } from './WinsList'

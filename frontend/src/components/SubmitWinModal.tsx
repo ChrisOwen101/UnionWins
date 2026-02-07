@@ -132,11 +132,13 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
                 ) : (
                     <>
                         <p className="text-gray-600 mb-4">
-                            Share a news article or blog post about a recent union victory.
+                            Share a news article or blog post about a recent union victory. We'll extract the details and an admin will review before publishing.
                         </p>
 
                         <p className="text-gray-600 mb-4">
-                            We'll extract the details and an admin will review before publishing.
+                            Want to bulk upload multiple wins? Email us <a href="mailto:cowen19921@gmail.com" className="text-blue-600 hover:underline">
+                                here
+                            </a> and we'll be in touch.
                         </p>
 
                         <form onSubmit={handleSubmit}>

@@ -246,6 +246,8 @@ function Stats() {
             <StatsHeader />
 
             <main id="main-content" className="max-w-6xl mx-auto px-5 py-6" tabIndex={-1}>
+                <h1 className="text-4xl font-light text-gray-900 mb-8">Union Wins Statistics</h1>
+
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                     <SummaryCard
@@ -475,19 +477,13 @@ function Stats() {
 function StatsHeader() {
     return (
         <header className="bg-white border-b border-gray-200 px-5 py-4">
-            <div className="max-w-6xl mx-auto flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-light text-gray-900">Union Wins Statistics</h1>
-                    <p className="text-gray-600 mt-1">Insights and trends from recorded union victories</p>
-                </div>
-                <nav aria-label="Stats navigation" className="flex items-center gap-4">
-                    <Link
-                        to="/"
-                        className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    >
-                        ← Back to Wins
-                    </Link>
-                </nav>
+            <div className="max-w-3xl mx-auto">
+                <Link
+                    to="/"
+                    className="text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium"
+                >
+                    ← Back to Home
+                </Link>
             </div>
         </header>
     )
