@@ -136,7 +136,7 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
                         </p>
 
                         <p className="text-gray-600 mb-4">
-                            Want to bulk upload multiple wins? Email us <a href="mailto:cowen19921@gmail.com" className="text-blue-600 hover:underline">
+                            Want to bulk upload multiple wins? Email us <a href="mailto:cowen19921@gmail.com" className="text-orange-600 hover:underline">
                                 here
                             </a> and we'll be in touch.
                         </p>
@@ -194,7 +194,7 @@ export function SubmitWinModal({ isOpen, onClose, onSubmit }: SubmitWinModalProp
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     disabled={isSubmitting}
                                     aria-label={isSubmitting ? 'Submitting form' : 'Submit form'}
                                 >

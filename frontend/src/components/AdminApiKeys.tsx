@@ -158,7 +158,7 @@ export function AdminApiKeys({ adminPassword }: AdminApiKeysProps) {
                 <h2 className="text-xl font-semibold">API Keys</h2>
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
                 >
                     {showCreateForm ? 'Cancel' : 'Generate New Key'}
                 </button>
@@ -270,8 +270,8 @@ export function AdminApiKeys({ adminPassword }: AdminApiKeysProps) {
                                         <h3 className="font-semibold">{key.name}</h3>
                                         <span
                                             className={`px-2 py-0.5 text-xs rounded ${key.is_active
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-200 text-gray-600'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-200 text-gray-600'
                                                 }`}
                                         >
                                             {key.is_active ? 'Active' : 'Inactive'}
@@ -294,8 +294,8 @@ export function AdminApiKeys({ adminPassword }: AdminApiKeysProps) {
                                     <button
                                         onClick={() => toggleApiKey(key.id, !key.is_active)}
                                         className={`px-3 py-1 text-sm rounded ${key.is_active
-                                                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                            ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                            : 'bg-green-100 text-green-800 hover:bg-green-200'
                                             }`}
                                     >
                                         {key.is_active ? 'Disable' : 'Enable'}

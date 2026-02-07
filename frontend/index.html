@@ -15,12 +15,16 @@
     <title>
       What Have Unions Done For Us - Recent Union Wins & Achievements
     </title>
-    <!-- Umami Analytics -->
-    <script
-      defer
-      src="https://analytics.whathaveunionsdoneforus.uk/script.js"
-      data-website-id="9984204a-d911-46e4-8212-8ca2e7ca9ad1"
-    ></script>
+    <!-- Umami Analytics - Only enabled in production -->
+    <script>
+      if (import.meta.env.PROD) {
+        const script = document.createElement('script');
+        script.defer = true;
+        script.src = 'https://analytics.whathaveunionsdoneforus.uk/script.js';
+        script.dataset.websiteId = '9984204a-d911-46e4-8212-8ca2e7ca9ad1';
+        document.head.appendChild(script);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

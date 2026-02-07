@@ -74,7 +74,7 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
                             placeholder="Enter admin password"
                             autoFocus
                             aria-required="true"
@@ -90,14 +90,14 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
                     <button
                         type="submit"
                         disabled={loading || !password}
-                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
                         aria-label={loading ? 'Verifying password' : 'Login to admin dashboard'}
                     >
                         {loading ? 'Verifying...' : 'Login'}
                     </button>
                 </form>
                 <p className="text-center text-sm text-gray-500 mt-4">
-                    <a href="/" className="text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">← Back to home</a>
+                    <a href="/" className="text-orange-600 hover:underline focus:outline-none focus:ring-2 focus:ring-orange-500 rounded">← Back to home</a>
                 </p>
             </div>
         </div>
@@ -150,9 +150,9 @@ function AdminDashboard({ adminPassword }: { adminPassword: string }) {
                                 aria-selected={activeTab === tab.id}
                                 aria-controls={`panel-${tab.id}`}
                                 className={`
-                                    whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
+                                    whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-orange-500
                                     ${activeTab === tab.id
-                                        ? 'border-blue-500 text-blue-600'
+                                        ? 'border-orange-500 text-orange-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }
                                 `}

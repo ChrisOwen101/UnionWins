@@ -33,17 +33,17 @@ function ApiSignup() {
                             <code className="text-sm">
                                 <div className="mb-2">
                                     <span className="text-green-600 font-semibold">GET</span>{' '}
-                                    <span className="text-blue-600">/api/wins</span>
+                                    <span className="text-orange-600">/api/wins</span>
                                     <span className="text-gray-500 ml-2">- Get all wins</span>
                                 </div>
                                 <div className="mb-2">
                                     <span className="text-green-600 font-semibold">GET</span>{' '}
-                                    <span className="text-blue-600">/api/wins/paginated</span>
+                                    <span className="text-orange-600">/api/wins/paginated</span>
                                     <span className="text-gray-500 ml-2">- Get wins with pagination</span>
                                 </div>
                                 <div>
                                     <span className="text-green-600 font-semibold">GET</span>{' '}
-                                    <span className="text-blue-600">/api/wins/query?q=search</span>
+                                    <span className="text-orange-600">/api/wins/query?q=search</span>
                                     <span className="text-gray-500 ml-2">- Search wins</span>
                                 </div>
                             </code>
@@ -70,13 +70,13 @@ function ApiSignup() {
                             <li>Expected usage volume</li>
                         </ul>
 
-                        <div className="mt-8 p-6 bg-blue-50 rounded-lg text-center">
+                        <div className="mt-8 p-6 bg-orange-50 rounded-lg text-center">
                             <p className="text-gray-700 mb-4">
                                 Ready to get started?
                             </p>
                             <a
                                 href={`mailto:${developerEmail}?subject=Union%20Wins%20API%20Key%20Request&body=Hi%2C%0A%0AI%27d%20like%20to%20request%20an%20API%20key%20for%20the%20Union%20Wins%20API.%0A%0AName%3A%20%0AOrganization%3A%20%0AProject%20description%3A%20%0AExpected%20usage%3A%20%0A%0AThanks!`}
-                                className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                                className="inline-block px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors"
                             >
                                 📧 Email {developerEmail}
                             </a>
@@ -85,7 +85,7 @@ function ApiSignup() {
                         <div className="mt-8 text-center">
                             <a
                                 href="/"
-                                className="text-blue-600 hover:underline"
+                                className="text-orange-600 hover:underline"
                             >
                                 ← Back to Union Wins
                             </a>
