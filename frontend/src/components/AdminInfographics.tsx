@@ -243,7 +243,7 @@ function PostCard({ win, index }: PostCardProps) {
             // Reset status after 3 seconds
             setTimeout(() => setUploadStatus('idle'), 3000)
         }
-    }, [win.id, win.title, win.union_name])
+    }, [win.id, win.summary, win.union_name])
 
     // Rotate through gradient colors
     const gradientColors = [
