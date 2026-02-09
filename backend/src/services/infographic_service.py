@@ -3,7 +3,6 @@ Service for generating infographic images from wins data.
 Uses Pillow to create PNG images directly.
 """
 import io
-import math
 from typing import List
 from datetime import datetime, timedelta
 from collections import Counter
@@ -64,7 +63,7 @@ async def generate_infographic_image(wins: List[UnionWin], period: str) -> bytes
         big_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 64)
         medium_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 16)
         small_font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 12)
-    except:
+    except (OSError, IOError):
         title_font = ImageFont.load_default()
         header_font = ImageFont.load_default()
         big_font = ImageFont.load_default()

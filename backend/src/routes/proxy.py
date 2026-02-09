@@ -1,7 +1,6 @@
 """
 API route for proxying external images to avoid CORS issues.
 """
-import base64
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response

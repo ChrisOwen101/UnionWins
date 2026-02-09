@@ -122,9 +122,14 @@ interface PostCardProps {
     index: number
 }
 
+const UPLOAD_POST_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImNvd2VuMTk5MjFAZ21haWwuY29tIiwiZXhwIjo0OTI0Mjc3ODE4LCJqdGkiOiJjNDM2ZjZlNy02NTk2LTRkY2QtYmIzNy00MmI1ZmQ5ZWE1ZWEifQ.VWB0sjy-yFGPFGUNEQdX7xXskI9AeJ_Ilb_IAQeQOKQ'
+const UPLOAD_POST_USER = 'whathaveunionsdoneforus'
+
 function PostCard({ win, index }: PostCardProps) {
     const cardRef = useRef<HTMLDivElement>(null)
     const [downloading, setDownloading] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
     const [proxyImageUrl, setProxyImageUrl] = useState<string | null>(null)
 
     // Load Google Font for the card
@@ -146,12 +151,12 @@ function PostCard({ win, index }: PostCardProps) {
             try {
                 const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(win.image_urls![0])}`
                 const response = await fetch(proxyUrl)
-                
+
                 if (!response.ok) {
                     console.log('Proxy failed, image will use gradient background')
                     return
                 }
-                
+
                 const blob = await response.blob()
                 const reader = new FileReader()
                 reader.onloadend = () => {
@@ -174,7 +179,8 @@ function PostCard({ win, index }: PostCardProps) {
             const dataUrl = await toPng(cardRef.current, {
                 quality: 1,
                 pixelRatio: 4, // 400 * 4 = 1600 for high resolution
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                skipFonts: true // Skip font embedding to avoid CORS errors with Google Fonts
             })
 
             const link = document.createElement('a')
@@ -187,6 +193,57 @@ function PostCard({ win, index }: PostCardProps) {
             setDownloading(false)
         }
     }, [win.id])
+
+    const uploadToInstagram = useCallback(async () => {
+        if (!cardRef.current) return
+
+        setUploading(true)
+        setUploadStatus('idle')
+        try {
+            const dataUrl = await toPng(cardRef.current, {
+                quality: 1,
+                pixelRatio: 4, // 400 * 4 = 1600 for high resolution
+                backgroundColor: '#ffffff',
+                skipFonts: true // Skip font embedding to avoid CORS errors with Google Fonts
+            })
+
+            // Convert data URL to Blob
+            const response = await fetch(dataUrl)
+            const blob = await response.blob()
+
+            // Create FormData for the API request
+            const formData = new FormData()
+            formData.append('photos[]', blob, `union-win-${win.id}.png`)
+            formData.append('user', UPLOAD_POST_USER)
+            formData.append('platform[]', 'instagram')
+            formData.append('title', `✊ Union Win: ${win.summary}\n\n🏛️ ${win.union_name ?? 'Workers United'}\n\n🔗 whathaveunionsdoneforus.uk\n\n#UnionWins #WhatHaveUnionsDoneForUs`)
+
+            const uploadResponse = await fetch('https://api.upload-post.com/api/upload_photos', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Apikey ${UPLOAD_POST_API_KEY}`
+                },
+                body: formData
+            })
+
+            const result = await uploadResponse.json()
+
+            if (result.success) {
+                setUploadStatus('success')
+                console.log('Upload successful:', result)
+            } else {
+                setUploadStatus('error')
+                console.error('Upload failed:', result)
+            }
+        } catch (error) {
+            setUploadStatus('error')
+            console.error('Failed to upload to Instagram:', error)
+        } finally {
+            setUploading(false)
+            // Reset status after 3 seconds
+            setTimeout(() => setUploadStatus('idle'), 3000)
+        }
+    }, [win.id, win.title, win.union_name])
 
     // Rotate through gradient colors
     const gradientColors = [
@@ -222,102 +279,102 @@ function PostCard({ win, index }: PostCardProps) {
                         ...gradientStyle
                     }}
                 >
-                {/* Background image if available - use proxied base64 for download compatibility */}
-                {proxyImageUrl && (
-                    <img
-                        src={proxyImageUrl}
-                        alt=""
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            zIndex: 0
-                        }}
-                    />
-                )}
-                
-                {/* Dark overlay for images */}
-                {proxyImageUrl && (
+                    {/* Background image if available - use proxied base64 for download compatibility */}
+                    {proxyImageUrl && (
+                        <img
+                            src={proxyImageUrl}
+                            alt=""
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                zIndex: 0
+                            }}
+                        />
+                    )}
+
+                    {/* Dark overlay for images */}
+                    {proxyImageUrl && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%)',
+                                zIndex: 1
+                            }}
+                        />
+                    )}
+
+                    {/* Content */}
                     <div
                         style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%)',
-                            zIndex: 1
+                            position: 'relative',
+                            zIndex: 2,
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '24px',
+                            color: '#ffffff'
                         }}
-                    />
-                )}
-
-                {/* Content */}
-                <div 
-                    style={{
-                        position: 'relative',
-                        zIndex: 2,
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        padding: '24px',
-                        color: '#ffffff'
-                    }}
-                >
-                    {/* Header with emoji */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                        <span style={{ fontSize: '30px' }}>✊</span>
-                        <span style={{ fontSize: '18px', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>Union Win</span>
-                    </div>
-
-                    {/* Main title */}
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                        <h3
-                            style={{
-                                fontWeight: 700,
-                                lineHeight: 1.2,
-                                fontSize: win.title.length > 80 ? '20px' : win.title.length > 50 ? '24px' : '28px',
-                                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                                margin: 0
-                            }}
-                        >
-                            {win.title}
-                        </h3>
-                    </div>
-
-                    {/* Footer info */}
-                    <div style={{ marginTop: '16px' }}>
-                        {/* Union name */}
-                        <div
-                            style={{ 
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 14px', 
-                                borderRadius: '9999px', 
-                                fontSize: '14px', 
-                                fontWeight: 500,
-                                backgroundColor: 'rgba(255,255,255,0.25)',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            <span>🏛️</span>
-                            <span>{win.union_name ?? 'Workers United'}</span>
+                    >
+                        {/* Header with emoji */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                            <span style={{ fontSize: '30px' }}>✊</span>
+                            <span style={{ fontSize: '18px', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>Union Win</span>
                         </div>
 
-                        {/* Date */}
-                        <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.3)', marginTop: '10px' }}>
-                            📅 {formatDate(win.date)}
+                        {/* Main title */}
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                            <h3
+                                style={{
+                                    fontWeight: 700,
+                                    lineHeight: 1.2,
+                                    fontSize: win.title.length > 80 ? '20px' : win.title.length > 50 ? '24px' : '28px',
+                                    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                    margin: 0
+                                }}
+                            >
+                                {win.title}
+                            </h3>
                         </div>
 
-                        {/* Branding */}
-                        <div style={{ paddingTop: '12px', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-                            whathaveunionsdoneforus.uk
+                        {/* Footer info */}
+                        <div style={{ marginTop: '16px' }}>
+                            {/* Union name */}
+                            <div
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 14px',
+                                    borderRadius: '9999px',
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    backgroundColor: 'rgba(255,255,255,0.25)',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                <span>🏛️</span>
+                                <span>{win.union_name ?? 'Workers United'}</span>
+                            </div>
+
+                            {/* Date */}
+                            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.3)', marginTop: '10px' }}>
+                                📅 {formatDate(win.date)}
+                            </div>
+
+                            {/* Branding */}
+                            <div style={{ paddingTop: '12px', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+                                whathaveunionsdoneforus.uk
+                            </div>
                         </div>
                     </div>
-                </div>
                 </div>
             </div>
 
@@ -342,6 +399,50 @@ function PostCard({ win, index }: PostCardProps) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                         Download
+                    </>
+                )}
+            </button>
+
+            {/* Upload to Instagram button */}
+            <button
+                onClick={uploadToInstagram}
+                disabled={uploading}
+                className={`w-full py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm ${uploadStatus === 'success'
+                    ? 'bg-green-600 text-white'
+                    : uploadStatus === 'error'
+                        ? 'bg-red-600 text-white hover:bg-red-700'
+                        : 'bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 disabled:opacity-50'
+                    }`}
+                aria-label={`Upload post for ${win.title} to Instagram`}
+            >
+                {uploading ? (
+                    <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Uploading...
+                    </>
+                ) : uploadStatus === 'success' ? (
+                    <>
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Posted!
+                    </>
+                ) : uploadStatus === 'error' ? (
+                    <>
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Failed - Try Again
+                    </>
+                ) : (
+                    <>
+                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                        Upload to Instagram
                     </>
                 )}
             </button>
@@ -680,7 +781,7 @@ export function AdminInfographics({ adminPassword }: AdminInfographicsProps) {
                 const sortedWins = [...allWins].sort((a, b) =>
                     new Date(b.date).getTime() - new Date(a.date).getTime()
                 )
-                setRecentWins(sortedWins.slice(0, 5))
+                setRecentWins(sortedWins.slice(0, 10))
 
                 // Filter wins by their occurred date for each period
                 const weekWins = filterWinsByPeriod(allWins, 'week')
@@ -732,7 +833,7 @@ export function AdminInfographics({ adminPassword }: AdminInfographicsProps) {
             <div>
                 <h2 className="text-xl font-bold text-gray-900 mb-2">📱 Recent Posts</h2>
                 <p className="text-gray-600 mb-4">
-                    Instagram-ready cards for the 5 most recent union wins. Click to download.
+                    Instagram-ready cards for the 10 most recent union wins. Click to download.
                 </p>
                 <div className="flex gap-6 overflow-x-auto pb-4">
                     {recentWins.map((win, index) => (
