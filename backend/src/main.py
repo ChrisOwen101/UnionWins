@@ -107,7 +107,7 @@ def process_pending_requests() -> None:
         poll_count += 1
 
         # Log heartbeat every 12 polls (roughly every minute with 5s interval)
-        if poll_count % 12 == 0:
+        if poll_count % 100 == 0:
             print(
                 f"💓 Background thread heartbeat - poll #{poll_count}", flush=True)
 
