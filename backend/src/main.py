@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from src.config import ALLOWED_ORIGINS, POLLING_INTERVAL_SECONDS, PORT
 from src.database import get_db, init_db
-from src.routes import wins, search, rss, submissions, admin, newsletter, scraping
+from src.routes import wins, search, rss, submissions, admin, newsletter, scraping, proxy
 from src.services.research_service import (
     create_research_input,
     create_background_task,
@@ -263,6 +263,7 @@ app.include_router(submissions.router)
 app.include_router(admin.router)
 app.include_router(newsletter.router)
 app.include_router(scraping.router)
+app.include_router(proxy.router)
 
 # Serve static files from frontend build
 # In Docker: /app/backend/static, locally: ../frontend/dist

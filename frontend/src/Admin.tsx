@@ -7,9 +7,10 @@ import { AdminRecentWins } from './components/AdminRecentWins'
 import { AdminApiKeys } from './components/AdminApiKeys'
 import { AdminScrapeSources } from './components/AdminScrapeSources'
 import { AdminNewsletterSubscribers } from './components/AdminNewsletterSubscribers'
+import { AdminInfographics } from './components/AdminInfographics'
 import { Footer } from './components/Footer'
 
-type TabId = 'pending' | 'recent' | 'search' | 'status' | 'api-keys' | 'newsletter' | 'scraping'
+type TabId = 'pending' | 'recent' | 'search' | 'status' | 'api-keys' | 'newsletter' | 'scraping' | 'social-sharing'
 
 interface Tab {
     id: TabId
@@ -24,6 +25,7 @@ const tabs: Tab[] = [
     { id: 'scraping', label: 'Scraping' },
     { id: 'api-keys', label: 'API Keys' },
     { id: 'newsletter', label: 'Newsletter' },
+    { id: 'social-sharing', label: 'Social Sharing' },
 ]
 
 function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
@@ -199,6 +201,11 @@ function AdminDashboard({ adminPassword }: { adminPassword: string }) {
                     {activeTab === 'newsletter' && (
                         <div role="tabpanel" id="panel-newsletter" aria-labelledby="tab-newsletter">
                             <AdminNewsletterSubscribers adminPassword={adminPassword} />
+                        </div>
+                    )}
+                    {activeTab === 'social-sharing' && (
+                        <div role="tabpanel" id="panel-social-sharing" aria-labelledby="tab-social-sharing">
+                            <AdminInfographics adminPassword={adminPassword} />
                         </div>
                     )}
                 </div>
