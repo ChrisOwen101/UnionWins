@@ -122,7 +122,7 @@ interface PostCardProps {
     index: number
 }
 
-const UPLOAD_POST_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImNvd2VuMTk5MjFAZ21haWwuY29tIiwiZXhwIjo0OTI0Mjc3ODE4LCJqdGkiOiJjNDM2ZjZlNy02NTk2LTRkY2QtYmIzNy00MmI1ZmQ5ZWE1ZWEifQ.VWB0sjy-yFGPFGUNEQdX7xXskI9AeJ_Ilb_IAQeQOKQ'
+const UPLOAD_POST_API_KEY = import.meta.env.VITE_UPLOAD_POST_API_KEY || ''
 const UPLOAD_POST_USER = 'whathaveunionsdoneforus'
 
 function PostCard({ win, index }: PostCardProps) {

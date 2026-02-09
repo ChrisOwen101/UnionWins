@@ -12,6 +12,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL_SECONDS:-5}
       - RESEND_API_KEY=${RESEND_API_KEY}
+      - VITE_UPLOAD_POST_API_KEY=${VITE_UPLOAD_POST_API_KEY}
     volumes:
       - unionwins-data:/app/data
     networks:

@@ -73,6 +73,7 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           UMAMI_APP_SECRET: ${{ secrets.UMAMI_APP_SECRET }}
           UMAMI_DATABASE_URL: ${{ secrets.UMAMI_DATABASE_URL }}
+          VITE_UPLOAD_POST_API_KEY: ${{ secrets.VITE_UPLOAD_POST_API_KEY }}
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p $DEPLOY_PORT $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
@@ -84,6 +85,7 @@ jobs:
           echo "RESEND_API_KEY=$RESEND_API_KEY" >> /tmp/deploy.env
           echo "UMAMI_APP_SECRET=$UMAMI_APP_SECRET" >> /tmp/deploy.env
           echo "UMAMI_DATABASE_URL=$UMAMI_DATABASE_URL" >> /tmp/deploy.env
+          echo "VITE_UPLOAD_POST_API_KEY=$VITE_UPLOAD_POST_API_KEY" >> /tmp/deploy.env
 
           # Copy .env file to server
           sshpass -p "$DEPLOY_PASSWORD" scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT /tmp/deploy.env $DEPLOY_USER@$DEPLOY_HOST:~/unionwins/.env
