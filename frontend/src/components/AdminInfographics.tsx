@@ -207,9 +207,15 @@ function PostCard({ win, index }: PostCardProps) {
                 skipFonts: true // Skip font embedding to avoid CORS errors with Google Fonts
             })
 
-            // Convert data URL to Blob
-            const response = await fetch(dataUrl)
-            const blob = await response.blob()
+            // Convert data URL to Blob without using fetch (to avoid CSP issues)
+            const base64Data = dataUrl.split(',')[1]
+            const byteCharacters = atob(base64Data)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            const blob = new Blob([byteArray], { type: 'image/png' })
 
             // Create FormData for the API request
             const formData = new FormData()
